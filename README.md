@@ -1,0 +1,2 @@
+# Oekonometrimedgruppen
+Økonometrimedgruppen
