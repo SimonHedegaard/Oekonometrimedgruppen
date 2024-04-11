@@ -1,0 +1,6 @@
+---
+title: "Simon"
+output: html_document
+date: "2024-04-11"
+---
+jajajaja det virker nu
