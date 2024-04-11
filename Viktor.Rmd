@@ -1,0 +1,12 @@
+---
+title: "Viktor"
+author: "Viktor Damm"
+date: "2024-04-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Dette er mit dokument nu 
