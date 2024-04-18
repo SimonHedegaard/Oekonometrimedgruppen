@@ -11,10 +11,14 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 Exam 2:
+Opgave 1
+
+1. Estimer de to modeller vha. OLS. Kommenter på outputtet, sammenlign og
+fortolk resultaterne.
+
 ```{r}
 library(readr)
 data2 <- read_csv("data2.csv")
-View(data2)
 ```
 sal ar y = β0 +β1educ +β2salbeginn +β3male +β4mi nor i t y +u (1)
 og
@@ -33,7 +37,63 @@ jobcat <- data2$jobcat
 ```{r}
 salarymodel <- lm(salary~educ+salbegin+male+minority)
 logsalarymodel <- lm(logsalary~educ+lsalbegin+male+minority)
+summary(salarymodel);summary(logsalarymodel)
 ```
+
+Noter: 
+Model 1(salarymodel)
+
+- 1 more year of education increase the salary by 1000 dollar, holding the other variables fixed.
+- A starting salary increase by a 1000 dollars a year, would increase the salary in a new job in same bank by 1600 dollars a year
+- If you are a male, then your salary would be 1800 dollars higher yearly than the refferal group, which is female, holding all other variables fixed.
+- If you are a minority, then your salary would be 1720 dollars lower yearly than the refferal group, which is non-minority, holding all other variables fixed.
+- The coeffecient of education, salary begin, male are statisical signifikant up to the 5 % signifikant level.The minority is statistical insignificant when we have a 5% signifikant level.
+
+The adjusted r^2 means, that the 79% of the model is explained trough the model.
+
+Model 2
+
+- 1 more year of education increase the salary by 2,35 percent., holding the other variables fixed.
+- A starting salary increase by 1% a year, would increase the salary in a new job in same bank by 0,82% a year
+- If you are a male, then your salary would be 4,5% higher yearly than the refferal group, which is female, holding all other variables fixed.
+- If you are a minority, then your salary would be 4,1% lower yearly than the refferal group, which is non-minority, holding all other variables fixed.
+- The coeffecient of education, salary begin, male,minority are statisical signifikant up to the 5 % signifikant level.The minority is statistical insignificant when we have a 5% signifikant level.
+
+The adjusted r^2 means, that the 80,34% of the model is explained trough the model.
+
+
+If we compare the models, minority haf become signifikant, and the adjusted r^2 has slight increased.
+
+
+
+
+2. Udfør grafisk modelkontrol af de to modeller. Hvilken model vil du
+foretrække?
+
+```{r}
+plot(salarymodel, which = 1, main = "Salary Model"); plot(logsalarymodel, which = 1, main = "Log Salary Model")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OPGAVE 3
+
 ```{r}
 summary(salarymodel)
 ```
@@ -54,7 +114,7 @@ Nu square vi dem og cube
 
 ```{r}
 y_hat_square <- y_hat^2
-y_hatcube <- y_hat^3
+y_hat_cube <- y_hat^3
 y_hatlog_square <- y_hatlog^2
 y_hatlog_cube <- y_hatlog^3
 ```
@@ -62,7 +122,7 @@ Det indsætter vi så i vores model
 
 
 ```{r}
-reg <- lm(salary~educ+salbegin+male+minority+y_hat_square+y_hatcube)
+reg <- lm(salary~educ+salbegin+male+minority+y_hat_square+y_hat_cube)
 reglog <- lm(logsalary~educ+lsalbegin+male+minority+y_hatlog_square+y_hatlog_cube)
 ```
 
@@ -78,5 +138,13 @@ Vi kan LAVE EN RESET TEST FOR AT SE NONLINEAR
 ```{r}
 library(lmtest)
 resettest(salarymodel); resettest(logsalarymodel)
+```
+
+VI kan lave en WALDTEST
+
+```{r}
+library(lmtest)
+waldtest(reg, vcov = vcov(reg), terms = c("y_hat_square", "y_hat_cube")) #tester manuelt om de hver især er = 0
+waldtest(reglog, vcov = vcov(reglog), terms = c("y_hatlog_square", "y_hatlog_cube")) #tester manuelt om de hver især er = 0
 ```
 
