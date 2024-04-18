@@ -10,3 +10,73 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
+Exam 2:
+```{r}
+library(readr)
+data2 <- read_csv("data2.csv")
+View(data2)
+```
+sal ar y = β0 +β1educ +β2salbeginn +β3male +β4mi nor i t y +u (1)
+og
+log(salar y) = β0 +β1educ +β2 log(salbeg in)+β3male +β4minor it y +u
+```{r}
+salary <- data2$salary
+logsalary <- data2$lsalary
+educ <- data2$educ
+salbegin <- data2$salbegin
+lsalbegin <- data2$lsalbegin
+male <- data2$male
+minority <- data2$minority
+jobcat <- data2$jobcat
+```
+
+```{r}
+salarymodel <- lm(salary~educ+salbegin+male+minority)
+logsalarymodel <- lm(logsalary~educ+lsalbegin+male+minority)
+```
+```{r}
+summary(salarymodel)
+```
+```{r}
+summary(logsalarymodel)
+```
+sal ar y = β0 +β1educ +β2salbeginn +β3male +β4mi nor i t y +u (1)
+og
+
+log(salar y) = β0 +β1educ +β2 log(salbeg in)+β3male +β4minor it y +u
+
+```{r}
+y_hat <- -6.932+0.99327*educ+1.6*salbegin+1.83*male+-1.725*minority
+y_hatlog <- 0.8491+0.0235*educ+0.82*lsalbegin+0.045*male+-0.041*minority
+```
+
+Nu square vi dem og cube
+
+```{r}
+y_hat_square <- y_hat^2
+y_hatcube <- y_hat^3
+y_hatlog_square <- y_hatlog^2
+y_hatlog_cube <- y_hatlog^3
+```
+Det indsætter vi så i vores model
+
+
+```{r}
+reg <- lm(salary~educ+salbegin+male+minority+y_hat_square+y_hatcube)
+reglog <- lm(logsalary~educ+lsalbegin+male+minority+y_hatlog_square+y_hatlog_cube)
+```
+
+```{r}
+reg
+```
+```{r}
+reglog
+```
+
+Vi kan LAVE EN RESET TEST FOR AT SE NONLINEAR
+
+```{r}
+library(lmtest)
+resettest(salarymodel); resettest(logsalarymodel)
+```
+
