@@ -11,8 +11,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Exam 2: 
 
-Opgave 3: 
-
 ```{r}
 library(readr)
 data2 <- read_csv("data2.csv")
@@ -25,12 +23,41 @@ male <- data2$male
 minority <- data2$minority
 ```
 
+#Opgave 1: 
+
 ```{r}
 model1 <- lm(salary ~ educ + salbegin + male + minority)
 model2 <- lm(logsalary ~ educ + logsalbegin + male + minority)
-model1
-model2
+summary(model1) ; summary(model2)
 ```
+
+Notes: 
+Model 1: 
+- One more year of education increases the salary by approximately 1000$, holding the other variables fixed. 
+- A starting salary increase by 1000$ would increase salary by 1600 dollar yearly, holding other varibles fixed.
+- If you are a male, then your salary would be 1800 dollar higher yearly than the reference group female, holding other variables fixed.
+- If you are a minotiry, then your salary would be 1700 dollar higher yearly than the reference group non minority, holding other variables fixed.
+- The coeffecients of education, salarybegin and male are statistically significant up to the 5% significance level. Minority has become statistically significant, when having a significance level of 5%. 
+- The adjusted R^2 means, that 80% of the model is explained by the provided independent variables. 
+
+Model2:
+- One more year of education increases the salary by approximately 2,3%, holding the other variables fixed. 
+- A starting salary increase by 1% would increase salary by 0,82% yearly, holding other varibles fixed.
+- If you are a male, then your salary would be 4,5% higher yearly than the reference group female, holding other variables fixed.
+- If you are a minotiry, then your salary would be 4,1% lower yearly than the reference group non minority, holding other variables fixed.
+- The coeffecients of education, salarybegin and male are statistically significant up to the 5% significance level. Minority is statisticallyt insignificant, when having a significance level og 5%.  
+- The adjusted R^2 means, that 79% of the model is explained by the provided independent variables. 
+
+#Opgave 2
+
+```{r}
+plot(model1, which = 1, main = "Salary Model")
+plot(model2, which = 1, main = "Log Salary Model")
+```
+
+
+#Opgave 3: 
+
 
 ```{r}
 y_hat1 <- -6.9323 + 0.9933*educ + 1.6082*salbegin + 1.8309*male - 1.7254*minority
@@ -50,6 +77,11 @@ regreset1 <- lm(salary ~ educ + salbegin + male + minority + y_hat1_squared + y_
 
 ```{r}
 regreset2 <- lm(logsalary ~ educ + logsalbegin + male + minority + y_hat2_squared + y_hat2_cubed)
+```
+
+```{r}
+waldtest(regreset1, vcov = vcov(regreset1), terms = c("y_hat1_squared", "y_hat1_cubed")) #tester manuelt om de hver især er = 0
+waldtest(regreset2, vcov = vcov(regreset2), terms = c("y_hat2_squared", "y_hat2_cubed"))   #tester manuelt om de hver især er = 0
 ```
 
 ```{r}
