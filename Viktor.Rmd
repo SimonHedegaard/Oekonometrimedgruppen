@@ -9,4 +9,52 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Dette er mit dokument nu 
+Exam 2: 
+
+Opgave 3: 
+
+```{r}
+library(readr)
+data2 <- read_csv("data2.csv")
+salary <- data2$salary
+logsalary <- data2$lsalary
+educ <- data2$educ
+salbegin <- data2$salbegin
+logsalbegin <- data2$lsalbegin
+male <- data2$male
+minority <- data2$minority
+```
+
+```{r}
+model1 <- lm(salary ~ educ + salbegin + male + minority)
+model2 <- lm(logsalary ~ educ + logsalbegin + male + minority)
+model1
+model2
+```
+
+```{r}
+y_hat1 <- -6.9323 + 0.9933*educ + 1.6082*salbegin + 1.8309*male - 1.7254*minority
+y_hat2 <- 0.84913 + 0.02358*educ + 0.82073*logsalbegin + 0.04547*male - 0.04186*minority
+```
+
+```{r}
+y_hat1_squared <- y_hat1^2
+y_hat1_cubed <- y_hat1^3
+y_hat2_squared <- y_hat2^2
+y_hat2_cubed <- y_hat2^3
+```
+
+```{r}
+regreset1 <- lm(salary ~ educ + salbegin + male + minority + y_hat1_squared + y_hat1_cubed)
+```
+
+```{r}
+regreset2 <- lm(logsalary ~ educ + logsalbegin + male + minority + y_hat2_squared + y_hat2_cubed)
+```
+
+```{r}
+library(lmtest)
+resettest(model1)
+resettest(model2)
+```
+
