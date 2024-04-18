@@ -3,4 +3,46 @@ title: "Simon"
 output: html_document
 date: "2024-04-11"
 ---
-jajajaja det virker nu
+
+
+```{r}
+rm(list=ls())
+
+```
+
+```{r}
+data2 <- read.csv("data2.csv")
+salary<-data2$salary
+educ<-data2$educ
+salbegin<-data2$salbegin
+male<-data2$male
+minority<-data2$minority
+```
+
+$$s a l a r y = β0 + β1 e d u c + β2 s a l b e g i n + β3 m a l e + β4 m i n o r i t y + u$$
+$$log(salary)=β0+β1educ+β2log(salbegin)+β3male+β4minority+u$$
+
+```{r}
+model1<-lm(salary~educ+salbegin+male+minority)
+model1_log<-lm(log(salary)~educ+log(salbegin)+male+minority)
+```
+
+
+Undersøg om de to modeller er misspecificerede vha. RESET-testet.
+```{r}
+y_hat1<-0.9933*educ + 1.6082*salbegin + 1.8309*male + -1.7254*minority
+model1_reset<-lm(salary~educ+salbegin+male+minority+ I(y_hat1^2) + I(y_hat1^3))
+
+y_hat1_log<-0.02358*educ + 0.82073*log(salbegin) + 0.04547*male +  -0.04186*minority
+model1_log_reset<-lm(log(salary)~educ+log(salbegin)+male+minority + I(y_hat1_log^2) + I(y_hat1_log^3))
+
+library(lmtest)
+waldtest(model1_reset, vcov = vcov(model1_reset), terms = c("I(y_hat1^2)", "I(y_hat1^3)")) #tester manuelt om de hver især er = 0
+waldtest(model1_log_reset, vcov = vcov(model1_log_reset), terms = c("I(y_hat1_log^2)", "I(y_hat1_log^3)")) #tester manuelt om de hver især er = 0
+
+library(lmtest)
+resettest(model1)
+resettest(model1_log)
+
+
+```
