@@ -26,14 +26,98 @@ reg=lm(log(salary)~educ+log(salbegin)+male+minority)
 summary(reg)
 ```
 We can see that salary increases the most when the beginning salary increases with 1% holding everything else fixed.
-We can also see that a male gets 4% higher salary than females holding everything else fixed.
+We can also see that a male gets 4% higher salary than females holding everything else fixed. All results are significant. Adjusted R squared is fine.
+We fail to reject H0 meaning that the variables are jointly significant. All variables have signs of what we should expect.
 
+
+2. Udfør grafisk modelkontrol.
+```{r}
+plot(reg,1) #Jo fladere rød linje jo mere er residualerne non linear
+```
+It seems that there is no need for including non linear variables
+
+
+```{r}
+plot(reg,2) #Igen en lineær sammenhæng tyder på at der er en normal fordeling
+residuals<-resid(reg)
+hist(residuals)#Man kan også lave histogrammer over error terms og se om de er normally distributed
+```
+It seems that the residuals are normally distributed this also suggest that MLR5 and MLR4 are correct so that MLR6 is true
+
+
+
+```{r}
+plot(reg,3) #bliver residualerne mere spredt ud fra den røde linje tyder det på at der ikke er homoskedacity
+```
+Residualerne er pænt fordelt om den røde linje således at der er homoskedacity
+
+
+```{r}
+plot(reg,5) #identificere om der er outliers som har betydning for resultatet
+```
+No problem with outliers here - we can not see the cooks distance lines
+
+
+3. Test for heteroskedasticitet vha. Breusch-Pagan-testet og specialudgaven af White-testet.
+
+LM test:
+```{r}
+r2<-residuals^2
+
+res_mod<-lm(r2~educ+log(salbegin)+male+minority)
+summary(res_mod)
+
+```
+
+```{r}
+lm<-0.02923*nrow(data1)
+lm
+
+p_val<-1-pchisq(lm,4)
+p_val
+
+```
+
+```{r}
+library(lmtest)
+bptest(reg)
+```
+
+White test:
+```{r}
+y_hat<-fitted(reg)
+y_hat_sq<-y_hat^2
+```
+
+```{r}
+white_test<-lm(r2~y_hat+y_hat_sq)
+summary(white_test)
+```
+Again we reject H0 meaning that the model contains hetroskedaticity
+
+
+4. Beregn robuste standardfejl for modellen og sammenlign med resultaterne i spørgsmål 1.
+```{r}
+library(texreg)
+library(lmtest)
+library(sandwich)
+library(foreign)
+library(textreg)
+library(zoo)
+modela <- reg
+modelb <- coeftest(modela, vcov = vcovHC(modela, type = "HC0"))
+screenreg(list(OLS = modela, OLS_robust_se = modelb), digits = 4)
+```
+Ovenstående udregner korrekte se når der er hetroskedacity - men de ændrer sig ikke ret meget.
+Der er dermed ikke stærk hetro.
 
 
 5. Test hypotesen H0 : β2 = 1 mod alternativet H1 : β2 ̸= 1.
 ```{r}
-t_stat<-(0.82180-1)/0.00387
-c<-qt*
+t_stat<-(0.82180-1)/0.0374
+c<-qt(0.05,nrow(data1)-1)
+p_val<-pt(t_stat,nrow(data1)-1)
+p_val
 ```
 
 
