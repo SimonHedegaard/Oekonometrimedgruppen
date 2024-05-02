@@ -5,7 +5,8 @@ date: "2024-03-18"
 ---
 
 ```{r}
-data1 <- read.csv("~/Desktop/Økonometri 4. semester/Økonometri/data1.csv")
+data1 <- read.csv("~/Desktop/Økonometri 4. semester/Økonometrimedgruppen/data1.csv")
+View(data1)
 salary<-data1$salary
 educ<-data1$educ
 salbegin<-data1$salbegin
