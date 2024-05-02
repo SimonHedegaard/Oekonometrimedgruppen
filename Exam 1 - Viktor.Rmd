@@ -1,0 +1,136 @@
+---
+title: "Exam 1 - Viktor"
+author: "Viktor Damm"
+date: "2024-05-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(sandwich)
+library(foreign)
+library(texreg)
+```
+
+```{r}
+data1 <- read_csv("data1.csv")
+salary<-data1$salary
+educ<-data1$educ
+salbegin<-data1$salbegin
+male<-data1$male
+minority<-data1$minority
+```
+
+log(salary) = β0 + β1educ + β2log(salbegin) + β3male + β4minority + u
+
+#1. Estimer modellen vha. OLS. Kommenter på outputtet og fortolk resultaterne.
+```{r}
+reg=lm(log(salary)~educ+log(salbegin)+male+minority)
+summary(reg)
+```
+We can see that salary increases the most when the beginning salary increases with 1% holding everything else fixed.
+We can also see that a male gets 4% higher salary than females holding everything else fixed.
+- All are significant
+- Adjusted R^square of 80%
+- They are jointly significant
+- All have the expected signs
+
+#Opgave 2. - Udfør grafisk modelkontrol
+
+We make 4 different graphic model control: 
+
+```{r}
+plot(reg, 1)
+```
+-The dots are equally sread around a horizontal line, indicating, that we dont have any non-linear relationship 
+- This is a sign of well specified model
+
+```{r}
+plot(reg, 2)
+```
+- This plot shows, if the residuals are normally distributed
+- If they fit nicely around the dottet line, then they are normally distributed 
+- Verifies MLR 6
+- You could also plot a histogram of the residuals!
+
+```{r}
+plot(reg, 3)
+```
+- This one checks for homoskedasticity
+- -The dots are equally sread around a horizontal line, indicating, that we have homoskedasticity
+- They are randomly spread and does not increase with the fitted values 
+
+```{r}
+plot(reg, 5)
+```
+- THis one check, if we have any outliers of major impact
+_ Cook's distance lines are not even present, meaning that there are no outliers of impact. 
+
+#3. Test for heteroskedasticitet vha. Breusch-Pagan-testet og specialudgaven af White-testet.
+
+```{r}
+residuals <- resid(reg)
+residuals_squared <- residuals^2
+```
+
+```{r}
+res_mod <- lm(residuals_squared ~ educ + log(salbegin) + male + minority)
+summary(res_mod)
+```
+
+```{r}
+multiple_r_squared <- 0.02923
+n <- nrow(data1)
+lm_test <- multiple_r_squared*n
+lm_test
+```
+
+```{r}
+p_value_lmtest <- 1-pchisq(lm_test,4)
+p_value_lmtest
+```
+
+```{r}
+library(lmtest)
+bptest(reg)
+```
+- We reject H0, so there is Heteroskedasticity
+- We cannot use the graphical model control
+
+We now use the White-Test: 
+
+```{r}
+y_hat <- reg$fitted.values
+y_hatsquared <- reg$fitted.values^2
+white_test <- lm(residuals_squared ~ y_hat + y_hatsquared)
+summary(white_test)
+```
+- We reject H0 again!
+
+#4. Beregn robuste standardfejl for modellen og sammenlign med resultaterne i spørgsmål 1.
+
+- Vi bruger R til at udregne dem, men vi skal også have formlen med, så dden kan forklares: 
+
+```{r}
+reg_robust <- coeftest(reg, vcov = vcovHC(reg, type = "HC0"))
+screenreg(list(OLS =reg, OLS_robust_se =reg_robust), digits =4)
+```
+- Here we can compare our standard errors with our robust standard errors
+- Not so big a differene
+- The results does not change
+- Heterosekdasticity is not very strong in this example
+
+
+#5. Test hypotesen H0 : β2 = 1 mod alternativet H1 : β2 ̸= 1.
+```{r}
+t_stat<-(0.82180-1)/0.0374
+t_stat
+c<-qt(0.05, n-1)
+c
+p_value<- pt(t_stat, n-1)
+p_value
+```
+
