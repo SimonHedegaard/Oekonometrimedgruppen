@@ -1,0 +1,6 @@
+---
+title: "Nicolaj Exam 1"
+author: "Nicolaj"
+date: "2024-05-02"
+output: html_document
+---
