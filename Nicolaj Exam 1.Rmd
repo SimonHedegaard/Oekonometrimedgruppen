@@ -4,3 +4,158 @@ author: "Nicolaj"
 date: "2024-05-02"
 output: html_document
 ---
+
+```{r}
+data1 <- read.csv("data1.csv")
+View(data1)
+salary<-data1$salary
+educ<-data1$educ
+salbegin<-data1$salbegin
+male<-data1$male
+minority<-data1$minority
+```
+
+log(salary) = β0 + β1educ + β2log(salbegin) + β3male + β4minority + u
+
+
+
+
+
+• 1. Estimer modellen vha. OLS. Kommenter på outputtet og fortolk resultaterne.
+```{r}
+reg=lm(log(salary)~educ+log(salbegin)+male+minority)
+summary(reg)
+```
+We can see that salary increases the most when the beginning salary increases with 1% holding everything else fixed.
+We can also see that a male gets 4% higher salary than females holding everything else fixed.
+
+Adjusted R-squared is 0.8 which is good.
+
+Our independent variables is jointly significant, with a fstat 481
+
+All our exspected signs i what you would assume.
+
+
+
+
+• 2. Udfør grafisk modelkontrol.
+```{r}
+plot(reg, which=1)
+```
+
+Here we can see our residuals is nicely spread around the horizontal line. So our model specified correctly in non-linear terms. Our predicted model fit the linear line.
+
+
+
+
+```{r}
+plot(reg, which=2)
+```
+Here we can see that our residuals is normally distributed, which we want. The residuals in the model follow the linear line, however there is some outliers. Which means our model holds the Markov rule 4 and 5.
+
+
+
+
+
+```{r}
+plot(reg, which=3)
+```
+Here we can see that our model have homoskedacity, as our standardized resdiuals is spread evenly around our predicted model.
+
+
+```{r}
+plot(reg, which=5)
+```
+Here we can see that there is no outliers that affekt our estimators, and we are within the red dotted lines.
+
+• 3. Test for heteroskedasticitet vha. Breusch-Pagan-testet og specialudgaven af White-testet.
+
+```{r}
+residuals <- resid(reg)
+residuals_squared <- residuals^2
+rezmod=lm(residuals_squared~educ+log(salbegin)+male+minority)
+summary(rezmod)
+```
+```{r}
+multiple_squared <- 0.02923
+n <- nrow(data1)
+lmtest <- multiple_squared*n
+p_value_lmtest <- 1-pchisq(lmtest,4)
+p_value_lmtest
+
+```
+
+```{r}
+library(lmtest)
+bptest(reg)
+```
+We reject H0, which means we have heteroskedacity
+
+WHITE TEST, but we use a somewhat simpler method proposed by Woolridge, because we have more than 3 variables
+
+
+```{r}
+y_hat <- reg$fitted.values
+y_hatsquared <- reg$fitted.values^2
+white_test <- lm(residuals_squared~y_hat+y_hatsquared)
+white_test
+```
+```{r}
+summary(white_test)
+```
+We reject H0 again, which means we have heteroskedacity
+
+```{r}
+summary(reg)
+```
+
+
+
+• 4. Beregn robuste standardfejl for modellen og sammenlign med resultaterne i spørgsmål 1.
+
+```{r}
+library(lmtest)
+library(sandwich)
+library(foreign)
+library(texreg)
+
+
+modela <- lm(log(salary)~educ + log(salbegin) + male+minority, data = data1)
+modelb <- coeftest(modela, vcov = vcovHC(modela, type = "HC0"))
+screenreg(list(OLS = modela, OLS_robust_se = modelb), digits = 4)
+
+```
+Our standard error change, however it is not alot, which could mean that we have low amount of heteroskedacity, or that the model to not perfrom that well at removing the heteroskedacity.
+As we can see there i no change in the significant of the values.
+
+
+
+• 5. Test hypotesen H0 : β2 = 1 mod alternativet H1 : β2 6= 1.
+```{r}
+t_stat<-(0.8218-1)/0.00374
+c<-qt(0.05,n-1)
+p_value <- pt(t_stat,4)
+p_value
+```
+
+
+
+
+
+
+
+
+
+
+
+
+6. Test hypotesen H0 : β3 = β4 = 0.
+
+
+
+
+
+
+
+
+
