@@ -16,7 +16,7 @@ library(texreg)
 ```
 
 ```{r}
-data1 <- read_csv("data1.csv")
+data1 <- read.csv("~/Desktop/Oecon/4. semester/Økonometri/Econ Exam/data1.csv")
 salary<-data1$salary
 educ<-data1$educ
 salbegin<-data1$salbegin
@@ -133,4 +133,60 @@ c
 p_value<- pt(t_stat, n-1)
 p_value
 ```
+- We reject the Null Hypothesis
+- Beta_2 is statistically different from 1
+- We reject at a 5 pct. significance level 
 
+#6. Test hypotesen H0 : β3 = β4 = 0.
+
+```{r}
+reg_restricted <- lm(log(salary)~educ+log(salbegin))
+r2_un <- summary(reg)$r.squared
+r2_r <- summary(reg_restricted)$r.squared
+df <- nrow(data1)-4-1
+```
+
+```{r}
+#Here we are obtaining our F-statistic
+f_stat <- ((r2_un - r2_r)/2)/((1 - r2_un)/df)
+f_critical <- qf(0.95, 2, df)
+p_value_f <- 1-pf(f_stat, 2, df)
+```
+- We reject our Null hypothesis 
+- Beta_3 and beta_4 are statistically different from 0
+- We cxan also test it with a function in R:
+
+```{r}
+library(foreign)
+library(car)
+myh0 <- c("male=0", "minority=0")
+linearHypothesis(reg, myh0)
+```
+
+#7. Estimer modellen vha. FGLS og kommenter på resultaterne
+
+```{r}
+logu_2 <- log(resid(reg)^2) #Obtain residuals from the original regression - We square them - And we log them
+```
+
+```{r}
+varreg <- lm(logu_2 ~ educ + log(salbegin) + male + minority) #We run a regression on the log_squared_residuals
+```
+
+```{r}
+w <- exp(fitted(varreg)) #Obtaining the weights
+```
+
+```{r}
+fgls <- lm(log(salary)~educ+log(salbegin)+male+minority, weight=1/w)
+screenreg(list(OLS = reg, FGLS = fgls), digits = 4)
+```
+- No differencs between the estimates, standard errors or significance of the estimates 
+
+#8. Har FGLS estimationen taget højde for al heteroskedasticiteten?
+
+```{r}
+fgls_robust <- coeftest(fgls, vcov = vcovHC(fgls, type = "HC0"))
+screenreg(list(OLS = reg, FGLS = fgls, FGLS_robust = fgls_robust), digits = 4)
+```
+- Here we have obtained robust standard errors for the FGLS 
