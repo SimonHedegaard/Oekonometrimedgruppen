@@ -182,7 +182,7 @@ No variables changes much, meaning that we cannot be sure that we have corrected
 
 
 
-Har FGLS estimationen taget højde for al heteroskedasticiteten?
+8. Har FGLS estimationen taget højde for al heteroskedasticiteten?
 
 No it does not seem so and that is why we test for robust standard error on our FGLS model. 
 
@@ -192,9 +192,6 @@ screenreg(list(OLS = reg, FGLS = FGLS, FGLS_robust=FGLS_robust), digits = 4)
 ```
 Results are almost the same, meaning that the model is not misspecified and there is only a small amount of hetroskedicity in the model.
 HVORFOR ER R^2 ikke med i FGLS_robust???
-
-
-
 
 
 
