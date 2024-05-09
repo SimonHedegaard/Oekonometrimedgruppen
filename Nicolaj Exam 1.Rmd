@@ -138,7 +138,7 @@ p_value <- pt(t_stat,4)
 p_value
 ```
 
-
+We reject the null Hyphothesis, as our p-value is below 0.05, meaning that β2 =/ 1 
 
 
 
@@ -151,11 +151,70 @@ p_value
 
 6. Test hypotesen H0 : β3 = β4 = 0.
 
+```{r}
+rreg <- lm(log(salary)~educ+log(salbegin))
+r2_rreg <- summary(rreg)$r.squared
+r2_ureg <- summary(reg)$r.squared
+r2_rreg
+r2_ureg
+```
+
+```{r}
+nrow(data1)
+df <- (474-4-1)
+df
+```
 
 
+```{r}
+f <- ((r2_ureg-r2_rreg)/2)/((1-r2_ureg)/df)
+f
+qt(0.95, df) #kritiske værdi
+
+1-pf(f, 2, df)
+```
+ We use a F statistic because it is jointly measure.
+We reject H0 meaning that Beta 3 and Beta 4 are statisticaly different
+The p value is below our significance level of 5%, and our F statistic is greater than are critical value. 
 
 
+We calculate this by a function in R as well.
+
+```{r}
+library(foreign)
+library(car)
+myh0 <- c("male=0", "minority=0")
+linearHypothesis(reg, myh0)
+```
+
+#7. Estimer modellen vha. FGLS og kommenter på resultaterne.
+
+You use FGLS if you know there is heteroskedicity, but do not know which variables it comes from.
+```{r}
+logu2 <- log(resid(reg)^2)
+```
+
+```{r}
+varreg <- lm(logu2~educ+log(salbegin)+male+minority)
+w <- exp(fitted(varreg))
+```
+
+```{r}
+#FGLS
+fgls <- lm(log(salary)~educ+log(salbegin)+male+minority, weight=1/w)
+screenreg(list("FGLS"=fgls, "OLS"=reg),digits=4)
+```
+They is no change to the signifikans levels, and the estimates stay about the same. So there is very small amouts of heteroskedicity.
+However to futher be sure we can use a Robust standard error test
 
 
+#8. Har FGLS estimationen taget højde for al heteroskedasticiteten?
 
+```{r}
+fgls_robust <- coeftest(fgls, vcov=vcovHC(fgls,type="HC0"))
+```
 
+```{r}
+screenreg(list("FGLS"=fgls, "OLS"=reg, "FGLS RSE"=fgls_robust),digits=4)
+```
+We can conclude that there is no sign of misspecfication in the model, and the heteroskedasicity is not big enough to affect the model.
