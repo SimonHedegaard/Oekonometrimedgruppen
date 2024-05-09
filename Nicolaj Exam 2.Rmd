@@ -13,8 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Exam 2:
 Opgave 1
 
-1. Estimer de to modeller vha. OLS. Kommenter på outputtet, sammenlign og
-fortolk resultaterne.
+#1.Estimer de to modeller vha. OLS. Kommenter på outputtet, sammenlign og fortolk resultaterne.
 
 ```{r}
 library(readr)
@@ -67,11 +66,11 @@ If we compare the models, minority haf become signifikant, and the adjusted r^2 
 
 
 
-2. Udfør grafisk modelkontrol af de to modeller. Hvilken model vil du
-foretrække?
+#2. Udfør grafisk modelkontrol af de to modeller. Hvilken model vil du foretrække?
 
 ```{r}
-plot(salarymodel, which = 1, main = "Salary Model"); plot(logsalarymodel, which = 1, main = "Log Salary Model")
+plot(salarymodel, main = "Salary Model"); 
+plot(logsalarymodel, main = "Log Salary Model") #den tager 1,2,3,5 med
 ```
 
 
@@ -80,19 +79,7 @@ plot(salarymodel, which = 1, main = "Salary Model"); plot(logsalarymodel, which 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-OPGAVE 3
+#3. Undersøg om de to modeller er misspecificerede vha. RESET-testet.
 
 ```{r}
 summary(salarymodel)
@@ -127,10 +114,10 @@ reglog <- lm(logsalary~educ+lsalbegin+male+minority+y_hatlog_square+y_hatlog_cub
 ```
 
 ```{r}
-reg
+summary(reg)
 ```
 ```{r}
-reglog
+summary(reglog)
 ```
 
 Vi kan LAVE EN RESET TEST FOR AT SE NONLINEAR
@@ -146,5 +133,67 @@ VI kan lave en WALDTEST
 library(lmtest)
 waldtest(reg, vcov = vcov(reg), terms = c("y_hat_square", "y_hat_cube")) #tester manuelt om de hver især er = 0
 waldtest(reglog, vcov = vcov(reglog), terms = c("y_hatlog_square", "y_hatlog_cube")) #tester manuelt om de hver især er = 0
+```
+
+
+
+
+
+
+
+
+
+
+#4. Forklar hvorfor det kunne være relevant at medtage educ2 som forklarende variabel i de to modeller. Estimer de to modeller igen hvor educ2 inkluderes (med tilhørende koefficient β5), kommenter kort på outputtet og udfør RESET-testet igen.
+
+```{r}
+salarymodel_square <- lm(salary~educ+I(educ^2)+salbegin+male+minority)
+logsalarymodel_square <- lm(logsalary~educ+I(educ^2)+lsalbegin+male+minority)
+screenreg(list("Salary"=salarymodel_square, "Log Salary"=logsalarymodel_square),digits=4)
+```
+
+If the education is squared it might affekt the dependent variable diffrent than the normal education varible. Education has a negativ affect on salary, however if we square the education we get that it now has a positiv affect on salary.
+In Log Salary, there is little to no impact.
+
+
+
+
+```{r}
+library(lmtest)
+resettest(salarymodel_square); resettest(logsalarymodel_square)
+```
+```{r}
+library(lmtest)
+resettest(salarymodel); resettest(logsalarymodel)
+```
+
+We still does not reject, however if we did reject the first resettest without educ2 in our model, by adding educ2 we can see our p-value increase and thus in case we orginally rejected we would not by adding educ2.
+
+
+
+#5. Test hypotesen H0 : β1 = β5 = 0 i begge modeller (fra spørgsmål 4)
+
+
+We calculate this by a function in R as well.
+
+```{r}
+library(foreign)
+library(car)
+myh0 <- c("educ=0", "I(educ^2)=0")
+linearHypothesis(salarymodel_square, myh0)
+linearHypothesis(logsalarymodel_square, myh0)
+```
+
+We can see in both models that they are jointly signifikant, however they are not sigfikant by themselves in our Log salary model.
+
+
+#6. Kunne der være problemer med målefejl i de to modeller? I hvilke tilfælde vil det udgøre et problem?
+
+
+
+
+
+```{r}
+View(data1)
 ```
 
