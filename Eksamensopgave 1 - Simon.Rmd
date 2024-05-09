@@ -41,8 +41,11 @@ It seems that there is no need for including non linear variables
 plot(reg,2) #Igen en lineær sammenhæng tyder på at der er en normal fordeling
 residuals<-resid(reg)
 hist(residuals)#Man kan også lave histogrammer over error terms og se om de er normally distributed
+library(tseries)
+jarque.bera.test(reg$residuals)
+shapiro.test(reg$residuals)
 ```
-It seems that the residuals are normally distributed this also suggest that MLR5 and MLR4 are correct so that MLR6 is true
+It seems that the residuals are normally distributed this also suggest that MLR5 and MLR4 are correct so that MLR6 is true. But if we chech for normallity in the residuals the result is that the residuals are not nornamlly distributed. 
 
 
 
@@ -120,7 +123,37 @@ p_val<-pt(t_stat,nrow(data1)-1)
 p_val
 ```
 
+We reject our null hypothesis meaning that β2 is not equal to 1, meaning that is statistical β2 ̸=1.
 
+6. TesthypotesenH0 :β3 =β4 =0.
+```{r}
+ureg<-reg
+rreg<-lm(log(salary)~educ+log(salbegin))
+r2_ureg<-summary(ureg)$r.squared
+r2_rreg<-summary(rreg)$r.squared
+
+df<-ureg$df.residual #n-k-1
+df
+
+F<-((r2_ureg-r2_rreg)/2/((1-r2_ureg)/df)) #F test (2 er de antal variable vi fjerne i restricted)
+F
+
+qt(0.95, df) #kritiske værdi
+
+1-pf(F, 2, df)
+
+```
+We use a F statistic because it is jointly measure.
+We reject H0 meaning that Beta 3 and Beta 4 are statisticaly different
+The p value is below our significance level of 5%, and our F statistic is greater than are critical value. 
+
+We calculate this by a function in R as well.
+```{r}
+library(foreign)
+library(car)
+myh0 <- c("male=0", "minority=0")
+linearHypothesis(reg, myh0)
+```
 
 
 
