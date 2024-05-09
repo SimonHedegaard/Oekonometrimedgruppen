@@ -140,7 +140,7 @@ F
 
 qt(0.95, df) #kritiske værdi
 
-1-pf(F, 2, df)
+1-pf(F, 2, df) #p-værdi
 
 ```
 We use a F statistic because it is jointly measure.
@@ -154,6 +154,44 @@ library(car)
 myh0 <- c("male=0", "minority=0")
 linearHypothesis(reg, myh0)
 ```
+Results are the same.
+
+
+7. Estimer modellen vha. FGLS og kommenter på resultaterne.
+
+Hvis man ikke ved hvilke variable som forsager heteroskedasticity kan FGLS anvendes
+```{r}
+logu2<-log(resid(reg)^2)
+varreg<-lm(logu2~educ+log(salbegin)+male+minority)
+w<-exp(fitted(varreg))
+
+
+FGLS<-lm(log(salary)~educ+log(salbegin)+male+minority, weight=1/w)
+
+
+library(texreg)
+library(lmtest)
+library(sandwich)
+library(foreign)
+library(textreg)
+library(zoo)
+screenreg(list(OLS = reg, FGLS = FGLS), digits = 4)
+
+```
+No variables changes much, meaning that we cannot be sure that we have corrected for hetro.
+
+
+
+Har FGLS estimationen taget højde for al heteroskedasticiteten?
+
+No it does not seem so and that is why we test for robust standard error on our FGLS model. 
+
+```{r}
+FGLS_robust<-coeftest(FGLS, vcov = vcovHC(FGLS, type = "HC0"))
+screenreg(list(OLS = reg, FGLS = FGLS, FGLS_robust=FGLS_robust), digits = 4)
+```
+Results are almost the same, meaning that the model is not misspecified and there is only a small amount of hetroskedicity in the model.
+HVORFOR ER R^2 ikke med i FGLS_robust???
 
 
 
