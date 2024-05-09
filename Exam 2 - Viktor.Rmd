@@ -159,6 +159,62 @@ linearHypothesis(model2_ny, myh0)
 
 #6. Kunne der være problemer med målefejl i de to modeller? I hvilke tilfælde vil det udgøre et problem?
 
+We think that 2 variables may have measurement error. 
 
+Education
+- Some people may include on the job training, special training, internship and generel training.
+
+Salary/Beginsalary
+- Some people may include pensions and employment benefits such as payed lunch, car provided by their company, employment stocks, etc.
+
+But it could also be male and minority
+
+Male
+- If one is in doubt.
+
+Minority
+- If one believe that they are not a minority.
+
+
+Problem for the dependent variable:
+- Would be a problem if you have measurement error in the dependent variable, then a bias depends whether the cov(u+e,x) is equal or not equal to 0. If it not equal to 0 there may be a measurement error.
+
+Problem for the independent variable:
+- Depending on whether we assume that one of the independent variables is a proxy which is correlated with the error term 2 thing can happen:
+- If the proxy is not correlated with the measurement error then the estimators will not be biased but the varians of the residuals will be larger.
+- If the proxy is correlated with the the measurement error then the estimators will be biased and we would have classical errors in variables (CEV).
 
 #7. Beregn den prædikterede løn,ásalar y, for hver af de to modeller(fra spørgsmål 4) for de 474 observationer. På baggrund af disse, hvilken model vil du så foretrække?
+
+```{r}
+library(foreign)
+library(ggplot2) # this is a very useful package for data visualisation in R.
+X <- data.frame(educ=seq(1,25), salbegin=17, minority=1, male=1)
+```
+
+#model 1:
+```{r}
+c_interval <- predict(model1_ny, X, interval = "confidence") # this computes the CI for the model 
+p_interval <- predict(model1_ny, X, interval = "prediction") # this computes the PI for the model
+```
+
+```{r}
+salary_pred= c_interval[,1] # this extracts the predicted values 
+lower_ci = c_interval[,2] #this extracts the lower ci from c_interval 
+upper_ci=c_interval[,3] #this extracts the upper ci from c_interval 
+lower_pi = p_interval[,2] #this extracts the lower pi from c_interval 
+upper_pi=p_interval[,3] #this extracts the upper ci from c_interval
+```
+
+```{r}
+myplot <- ggplot(data = X, aes(x = X[,1])) +
+  geom_line(aes(y = salary_pred, colour = "Predicted")) +
+  geom_line(aes(y = lower_ci, colour = "Confidence interval")) +
+  geom_line(aes(y = upper_ci, colour = "Confidence interval")) +
+  geom_line(aes(y = lower_pi, colour = "Predicted interval")) +
+  geom_line(aes(y = upper_pi, colour = "Predicted interval")) +
+  scale_color_manual(values = c("Predicted" = "red", "Confidence interval" = "blue", "Predicted interval" = "green"),
+                     name = "Lines",  # You can adjust the legend title here
+                     labels = c("Predicted", "Confidence interval", "Predicted interval"))  # You can adjust the legend labels here
+myplot
+```
