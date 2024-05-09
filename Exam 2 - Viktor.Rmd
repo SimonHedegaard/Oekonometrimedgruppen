@@ -28,7 +28,7 @@ minority <- data2$minority
 ```{r}
 model1 <- lm(salary ~ educ + salbegin + male + minority)
 model2 <- lm(logsalary ~ educ + logsalbegin + male + minority)
-summary(model1) ; summary(model2)
+screenreg(list(Model1 = model1, Model2 = model2), digits = 4)
 ```
 
 Notes: 
@@ -54,10 +54,52 @@ Model2:
 plot(model1, which = 1, main = "Salary Model")
 plot(model2, which = 1, main = "Log Salary Model")
 ```
+Model1:
+-The dots are not equally sread around a horizontal line, indicating, that we perhabs have any non-linear relationship 
+- This is a sign of a bad specified model
+Model 2:
+-The dots are equally sread around a horizontal line, indicating, that we dont have any non-linear relationship 
+- This is a sign of well specified model
 
+```{r}
+plot(model1, which = 2, main = "Salary Model")
+plot(model2, which = 2, main = "Log Salary Model")
+```
+Model 1: 
+- This plot shows, if the residuals are normally distributed
+- If they fit nicely around the dottet line, then they are normally distributed 
+- Verifies MLR 6
+- You could also plot a histogram of the residuals!
+Model 2: 
+-This one is better!
+
+```{r}
+plot(model1, which = 3, main = "Salary Model")
+plot(model2, which = 3, main = "Log Salary Model")
+```
+Model 1: 
+- This one checks for homoskedasticity
+- -The dots are not equally sread around a horizontal line, indicating, that we have heterosekdasticity
+- They arenot randomly spread and doesincrease with the fitted values 
+Model 2:
+- This one checks for homoskedasticity
+- -The dots are equally sread around a horizontal line, indicating, that we have homoskedasticity
+- They are randomly spread and does not increase with the fitted values 
+
+```{r}
+plot(model1, which = 5, main = "Salary Model")
+plot(model2, which = 5, main = "Log Salary Model")
+```
+Model 1:
+- This one check, if we have any outliers of major impact
+_ Cook's distance lines are present, meaning that there could be outliers of impact, but there are no outside the lines, so it shouldn't be a problem
+Model 2:
+- THis one check, if we have any outliers of major impact
+_ Cook's distance lines are not even present, meaning that there are no outliers of impact.
+
+- All in all, we prefer the model with salary and salary begin 
 
 #Opgave 3: 
-
 
 ```{r}
 y_hat1 <- -6.9323 + 0.9933*educ + 1.6082*salbegin + 1.8309*male - 1.7254*minority
@@ -90,3 +132,33 @@ resettest(model1)
 resettest(model2)
 ```
 
+#4. Forklar hvorfor det kunne være relevant at medtage educ2 som forklarende variabel i de to modeller. Estimer de to modeller igen hvor educ2 inkluderes (med tilhørende koefficient β5), kommenter kort på outputtet og udfør RESET-testet igen.
+
+```{r}
+model1_ny <- lm(salary ~ educ + salbegin + male + minority + I(educ^2))
+model2_ny <- lm(logsalary ~ educ + I(educ^2) + logsalbegin + male + minority + I(educ^2))
+screenreg(list(Model1_ny = model1_ny, Model2_ny = model2_ny), digits = 4)
+```
+
+```{r}
+resettest(model1_ny)
+resettest(model2_ny)
+```
+
+#5. Test hypotesen H0 : β1 = β5 = 0 i begge modeller (fra spørgsmål 4).
+
+```{r}
+library(foreign)
+library(car)
+myh0 <- c("educ=0", "I(educ^2)=0")
+linearHypothesis(model1_ny, myh0)
+linearHypothesis(model2_ny, myh0)
+```
+
+- Educ and Educ^2 are jointly significant in both models!
+
+#6. Kunne der være problemer med målefejl i de to modeller? I hvilke tilfælde vil det udgøre et problem?
+
+
+
+#7. Beregn den prædikterede løn,ásalar y, for hver af de to modeller(fra spørgsmål 4) for de 474 observationer. På baggrund af disse, hvilken model vil du så foretrække?
