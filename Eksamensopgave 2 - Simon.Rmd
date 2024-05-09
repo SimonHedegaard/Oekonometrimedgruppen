@@ -1,0 +1,191 @@
+---
+title: "Eksamensopgave 2 - Simon"
+output: html_document
+date: "2024-05-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Exam 2: 
+
+```{r}
+library(readr)
+data2 <- read_csv("data2.csv")
+salary <- data2$salary
+logsalary <- data2$lsalary
+educ <- data2$educ
+salbegin <- data2$salbegin
+logsalbegin <- log(data2$salbegin)
+male <- data2$male
+minority <- data2$minority
+```
+
+#Opgave 1 Estimer de to modeller vha. OLS. Kommenter på outputtet, sammenlign og fortolk resultaterne: 
+
+```{r}
+model1 <- lm(salary ~ educ + salbegin + male + minority)
+model2 <- lm(logsalary ~ educ + logsalbegin + male + minority)
+summary(model1) ; summary(model2)
+```
+
+Notes: 
+Model 1: 
+- One more year of education increases the salary by approximately 1000$, holding the other variables fixed. 
+- A starting salary increase by 1000$ would increase salary by 1600 dollar yearly, holding other varibles fixed.
+- If you are a male, then your salary would be 1800 dollar higher yearly than the reference group female, holding other variables fixed.
+- If you are a minotiry, then your salary would be 1700 dollar higher yearly than the reference group non minority, holding other variables fixed.
+- The coeffecients of education, salarybegin and male are statistically significant up to the 5% significance level. Minority has become statistically significant, when having a significance level of 5%. 
+- The adjusted R^2 means, that 80% of the model is explained by the provided independent variables. 
+
+Model2:
+- One more year of education increases the salary by approximately 2,3%, holding the other variables fixed. 
+- A starting salary increase by 1% would increase salary by 0,82% yearly, holding other varibles fixed.
+- If you are a male, then your salary would be 4,5% higher yearly than the reference group female, holding other variables fixed.
+- If you are a minotiry, then your salary would be 4,1% lower yearly than the reference group non minority, holding other variables fixed.
+- The coeffecients of education, salarybegin and male are statistically significant up to the 5% significance level. Minority is statisticallyt insignificant, when having a significance level og 5%.  
+- The adjusted R^2 means, that 79% of the model is explained by the provided independent variables. 
+
+#Opgave 2 Udførgrafiskmodelkontrolafdetomodeller.Hvilken model vil du foretrække?
+
+```{r}
+plot(model1, main = "Salary Model")
+plot(model2, main = "Log Salary Model")
+```
+log is nice
+
+#Opgave 3 Undersøgomdetomodellerermisspecificeredevha.RESET-testet: 
+
+
+```{r}
+y_hat1 <- -6.9323 + 0.9933*educ + 1.6082*salbegin + 1.8309*male - 1.7254*minority
+y_hat2 <- 0.84913 + 0.02358*educ + 0.82073*logsalbegin + 0.04547*male - 0.04186*minority
+```
+
+```{r}
+y_hat1_squared <- y_hat1^2
+y_hat1_cubed <- y_hat1^3
+y_hat2_squared <- y_hat2^2
+y_hat2_cubed <- y_hat2^3
+```
+
+```{r}
+regreset1 <- lm(salary ~ educ + salbegin + male + minority + y_hat1_squared + y_hat1_cubed)
+```
+
+```{r}
+regreset2 <- lm(logsalary ~ educ + logsalbegin + male + minority + y_hat2_squared + y_hat2_cubed)
+```
+
+```{r}
+waldtest(regreset1, vcov = vcov(regreset1), terms = c("y_hat1_squared", "y_hat1_cubed")) #tester manuelt om de hver især er = 0
+waldtest(regreset2, vcov = vcov(regreset2), terms = c("y_hat2_squared", "y_hat2_cubed"))   #tester manuelt om de hver især er = 0
+```
+Tester manuelt
+```{r}
+library(lmtest)
+resettest(model1)
+resettest(model2)
+```
+
+
+#Forklar hvorfor det kunne være relevant at medtage educ^2 som forklarende variabel i de to modeller. Estimer de to modeller igen hvor educ2 inkluderes (med tilhørende koefficient β5), kommenter kort på outputtet og udfør RESET-testet igen.
+
+If the effect on salary is different when education is low and high. Meaning that the effect could change from being positive to being negative or the oppisite.
+
+```{r}
+model1_squared <- lm(salary ~ educ + salbegin + male + minority + I(educ^2))
+model2_squared <- lm(logsalary ~ educ + logsalbegin + male + minority + I(educ^2))
+
+library(texreg)
+library(lmtest)
+library(sandwich)
+library(foreign)
+library(textreg)
+library(zoo)
+screenreg(list(model1 = model1, model1_squared = model1_squared), digits = 4)
+resettest(model1_squared)
+screenreg(list(model2 = model2, model2_squared = model2_squared), digits = 4)
+resettest(model2_squared)
+```
+It does not change the results much. The p value becomes larger if we take the squared of education and thereby we can reject our null hypothesis at a higher significance level.
+
+
+# 5. Testhypotesen H0:β1=β5=0 i begge modeller (fraspørgsmål4). Kunne der være problemer med målefejl i de to modeller? I hvilke tilfælde vil det udgøre et problem?
+```{r}
+library(foreign)
+library(car)
+myh0 <- c("educ=0", "I(educ^2)=0")
+linearHypothesis(model1_squared, myh0)
+linearHypothesis(model2_squared, myh0)
+
+```
+The most interesting result is that before, in model2_squared educ and educ^2 where not statistical significant, but here the result is, that they are combined statistical significant, meaning that they should be included in the model.
+
+#6. Kunne der være problemer med målefejl i de to modeller? I hvilke tilfælde vil det udgøre et problem?
+We think that 2 variables may have measurement error. 
+
+Education
+- Some people may include on the job training, special training, internship and generel training.
+
+Salary/Beginsalary
+- Some people may include pensions and employment benefits such as payed lunch, car provided by their company, employment stocks, etc.
+
+But it could also be male and minority
+
+Male
+- If one is in doubt.
+
+Minority
+- If one believe that they are not a minority.
+
+
+Problem for the dependent variable:
+- Would be a problem if you have measurement error in the dependent variable, then a bias depends whether the cov(u+e,x) is equal or not equal to 0. If it not equal to 0 there may be a measurement error.
+
+Problem for the independent variable:
+- Depending on whether we assume that one of the independent variables is a proxy which is correlated with the error term 2 thing can happen:
+- If the proxy is not correlated with the measurement error then the estimators will not be biased but the varians of the residuals will be larger.
+- If the proxy is correlated with the the measurement error then the estimators will be biased and we would have classical errors in variables (CEV).
+
+
+#7. Beregn den prædikterede løn, salary, for hver af de to modeller (fraspørgsmål 4) for de 474 observationer. På baggrund af disse, hvilken model vil du så foretrække?
+
+```{r}
+library(foreign)
+library(ggplot2) # this is a very useful package for data visualisation in R.
+X <- data.frame(educ=seq(1,25), salbegin=17, minority=1, male=1)
+```
+
+#model 1:
+```{r}
+c_interval <- predict(model1_squared, X, interval = "confidence") # this computes the CI for the model 
+p_interval <- predict(model1_squared, X, interval = "prediction") # this computes the PI for the model
+```
+
+```{r}
+salary_pred= c_interval[,1] # this extracts the predicted values 
+lower_ci = c_interval[,2] #this extracts the lower ci from c_interval 
+upper_ci=c_interval[,3] #this extracts the upper ci from c_interval 
+lower_pi = p_interval[,2] #this extracts the lower pi from c_interval 
+upper_pi=p_interval[,3] #this extracts the upper ci from c_interval
+```
+
+```{r}
+myplot <- ggplot(data = X, aes(x = X[,1])) +
+  geom_line(aes(y = salary_pred, colour = "Predicted")) +
+  geom_line(aes(y = lower_ci, colour = "Confidence interval")) +
+  geom_line(aes(y = upper_ci, colour = "Confidence interval")) +
+  geom_line(aes(y = lower_pi, colour = "Predicted interval")) +
+  geom_line(aes(y = upper_pi, colour = "Predicted interval")) +
+  scale_color_manual(values = c("Predicted" = "red", "Confidence interval" = "blue", "Predicted interval" = "green"),
+                     name = "Lines",  # You can adjust the legend title here
+                     labels = c("Predicted", "Confidence interval", "Predicted interval"))  # You can adjust the legend labels here
+myplot
+```
+
+
+
+
+
