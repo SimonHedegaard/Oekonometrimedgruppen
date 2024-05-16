@@ -9,3 +9,103 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(readr)
+library(AER)
+library(foreign)
+library(car)
+library(sandwich)
+library(texreg)
+data3 <- read_csv("data3.csv")
+```
+
+
+#1. Estimermodellenvha.OLSogkommenterpåresultaterne.
+
+log(earning)= β0 + β1educ + β2exp + β3male+β4ethblack +β5ethhisp + u (1)
+```{r}
+learnings<-data3$learnings
+educ<-data3$educ
+exp<-data3$exp
+male<-data3$male
+ethblack<-data3$ethblack
+ethhisp<-data3$ethhisp
+siblings <- data3$siblings
+meduc <- data3$meduc
+feduc <- data3$feduc
+
+model1<-lm(learnings~educ+exp+male+ethblack+ethhisp)
+summary(model1)
+
+```
+
+#2. Hvorfor kunne vi være bekymrede for at uddannelse er endogen?
+- Uddannelse kan mulgivis være korreleret med noget i error term --> Dette kunne f.eks. være "ability" --> Derved bliver bliver uddannelse korreleret med error term, hvilket violates MLR4.
+
+#3. Er sibling s, meduc og feduc brugbare som instrumenter?
+We set up the conditions regarding IV's. 
+- Cov(z,x) \= 0
+- Cov(z,u) = 0 
+Dette skal så gælde for alle variablene
+We can do the reduced eqation to test if they are good IV's regarding the first assuption above. 
+
+```{r}
+reduced1 <- lm(educ ~ siblings + meduc + feduc + exp + male + ethblack + ethhisp)
+linearHypothesis(reduced1, c("siblings=0", "meduc=0", "feduc=0"))
+```
+We reject H0, meaning that they are jointly different from zero.
+
+Second assumption: 
+- If our 3 IV's are not correlated with out error term (and thereby ability), then we dont have a problem 
+- If this is true, is hard to say
+
+#4. Test om uddannelse er endogen.
+
+Den laver vi næste gang
+
+#5. Estimer modellen vha. 2SLS hvor du gør brug af de tre beskrevne instrumenter. Sammenlign med resultaterne i spørgsmål 1.
+
+```{r}
+educ_fitted <- fitted(reduced1)
+twoSLS <- lm(learnings~educ_fitted+exp+male+ethblack+ethhisp)
+summary(twoSLS)
+```
+```{r}
+screenreg(list(OLS = model1, Two_SLS = twoSLS),digits = 4)
+```
+
+```{r}
+twoslsautomatisk <- ivreg(learnings ~ educ + exp + male + ethblack + ethhisp | siblings + meduc + feduc + exp + male + ethblack + ethhisp) 
+summary(twoslsautomatisk)
+```
+
+```{r}
+screenreg(list(OLS = model1, Two_SLS = twoslsautomatisk),digits = 4)
+```
+
+#7. Udfør hele analysen igen hvor du kun bruger meduc og feduc som instrumenter. Ændrer det på dine konklusioner?
+
+We first test, if you can use these two instruments. 
+
+We set up the conditions regarding IV's. 
+- Cov(z,x) \= 0
+- Cov(z,u) = 0 
+Dette skal så gælde for alle variablene
+We can do the reduced eqation to test if they are good IV's regarding the first assuption above. 
+
+```{r}
+reduced2 <- lm(educ ~ meduc + feduc + exp + male + ethblack + ethhisp)
+linearHypothesis(reduced2, c("meduc=0", "feduc=0"))
+```
+We reject H0, meaning that they are jointly different from zero.
+
+We now use the 2SLS, when we only include the two instruments
+```{r}
+twoslsautomatisk2 <- ivreg(learnings ~ educ + exp + male + ethblack + ethhisp | meduc + feduc + exp + male + ethblack + ethhisp)
+```
+
+We now compare the two 2SLS, where we have used different instrument variables: 
+
+```{r}
+screenreg(list(Two_SLS_3IV = twoslsautomatisk, Two_SLS_2IV = twoslsautomatisk2),digits = 4)
+```
