@@ -10,7 +10,7 @@ data3 <- read_csv("data3.csv")
 ```
 
 
-#1. Estimermodellenvha.OLSogkommenterpåresultaterne.
+#1. Estimermodellen vha. OLS og kommenter på resultaterne.
 
 log(earning)= β0 + β1educ + β2exp + β3male+β4ethblack +β5ethhisp + u (1)
 ```{r}
@@ -26,3 +26,66 @@ summary(model1)
 
 ```
 
+#2. Hvorfor kunne vi være bekymrede for at uddannelse er endogen?
+Educ kan have endogenitetsproblem fordi noget af error term er correleret med abillity blandt andet, hvilket gør estimated biased. Så bliver MLR 4 ikke opfyldt.
+
+#3. Er siblings,meduc og feduc brugbare som instrument variable?
+For at instrument variabel z er brugbart skal følgende være opfyldt:
+$cov(z,u)=0$
+$cov(z,x)=/0$
+
+Stage 1: Run a reduced form equation
+```{r}
+siblings<-data3$siblings
+meduc<-data3$meduc
+feduc<-data3$feduc
+
+stage1 = lm(educ~exp+male+ethblack+ethhisp+siblings+meduc+feduc)
+educ_fitted=fitted(stage1)
+```
+
+Before we proceed, we need to make sure siblings, meduc and feduc are significant variables for educ.
+We can simply use an F test to test the joint null hypothesis:
+```{r}
+library(AER)
+linearHypothesis(stage1, c("siblings=0", "meduc=0", "feduc=0"))
+```
+H0: 
+siblings = meduc = feduc = 0
+
+
+Significant result meaning that H0 is rejected meaning that siblings, meduc and feduc are jointyly significant for the model.
+And we can assume that $cov(z,u)=0$ holds because ability is not correlated with amount of siblings, mothers education and fathers education.
+
+#4. Testomuddannelseerendogen.
+Laves næste gang
+
+```{r}
+
+```
+
+#5. Estimer modellen vha. 2SLS hvor du gør brug af de tre beskrevne instrumenter. Sammenlign med resultaterne i spørgsmål 1.
+Stage 2: Now we use fitted values of educ as an instrumental variable
+
+
+```{r}
+stage2<-lm(learnings~educ_fitted+exp+male+ethblack+ethhisp)
+summary(stage2)
+```
+
+```{r}
+library(texreg)
+screenreg(list(OLS = model1, Two_SLS = stage2), digits = 4)
+```
+
+We can do this manually as well
+```{r}
+library(sandwich); library(texreg)
+sls = ivreg(learnings ~ educ + exp + male + ethblack + ethhisp | exp + male + ethblack + ethhisp + siblings + meduc + feduc)
+sls
+```
+
+
+
+
+ 
