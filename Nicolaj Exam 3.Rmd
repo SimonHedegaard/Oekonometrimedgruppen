@@ -1,0 +1,94 @@
+---
+title: "Nicolaj Exam 3"
+author: "Nicolaj"
+date: "2024-05-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(sandwich)
+library(texreg)
+library(readr)
+library(car)
+library(AER)
+data3 <- read_csv("data3.csv")
+```
+
+
+#1. Estimer modellen vha.OLS og kommenter på resultaterne.
+
+log(earning)= β0 + β1educ + β2exp + β3male+β4ethblack +β5ethhisp + u (1)
+```{r}
+learnings<-data3$learnings
+educ<-data3$educ
+exp<-data3$exp
+male<-data3$male
+ethblack<-data3$ethblack
+ethhisp<-data3$ethhisp
+siblings <- data3$siblings
+meduc <- data3$meduc
+feduc <- data3$feduc
+model1<-lm(learnings~educ+exp+male+ethblack+ethhisp)
+summary(model1)
+
+```
+
+
+
+
+#2. Hvorfor kunne vi være bekymrede for at uddannelse er endogen?
+Because Educ can be correlated to ability, which makes the estimate bias. Education becomes correalted with error term, which means we violate MLR 4.
+
+
+#3. Er sibling s, meduc og feduc brugbare som instrumenter?
+We test all our IV, in order to check if they follow the conditions
+
+```{r}
+linearHypothesis(iv_model,c("siblings=0","feduc=0","meduc=0"))
+```
+We reject H:0, they are jointly not equal to zero.
+
+
+
+
+#4. Test om uddannelse er endogen.
+
+ 
+#5. Estimer modellen vha. 2SLS hvor du gør brug af de tre beskrevne instrumenter. Sammenlign med resultaterne i spørgsmål 1.
+
+ 
+```{r}
+iv_model <-lm(learnings~educ+exp+male+ethblack+ethhisp)
+iv_model
+iv_modelfitted <- fitted(iv_model)
+```
+
+Stage 2: Now we use fitted values of educ as an instrumental variable
+
+
+```{r}
+iv_model2<-lm(learnings~iv_modelfitted+exp+male+ethblack+ethhisp)
+summary(iv_model2)
+```
+
+```{r}
+library(texreg)
+screenreg(list(OLS = model1, Two_SLS = iv_modelfitted), digits = 4)
+```
+
+We can do this manually as well
+```{r}
+library(sandwich); library(texreg)
+sls = ivreg(learnings ~ educ + exp + male + ethblack + ethhisp | exp + male + ethblack + ethhisp + siblings + meduc + feduc)
+sls
+```
+
+
+
+#7. 
+Kopier fra viktor
+
