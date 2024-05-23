@@ -43,34 +43,52 @@ We can observe that all variables have the expected sign on the estimates. Furth
 
 #Opgave 2. - Udfør grafisk modelkontrol
 
-We make 4 different graphic model control: 
+To answer the quastion we make 4 different graphic model control, because we find theese the most interesting for doing graphical control of the model:
+We make graphical control of the model to conclude wether the Gauss Markov assumptions are fullfiled.
+
+Firstly we plot the residuals agains the fitted values, to look at if it seems that there is a non-linear relationsship in the model:
 
 ```{r}
 plot(reg, 1)
 ```
--The dots are equally sread around a horizontal line, indicating, that we dont have any non-linear relationship 
-- This is a sign of well specified model
+Since the dots are equally spread around a horizontal line, which indicates that we dont have any non-linear relationship, which we should account. 
+This is a sign of a well specified model, which means that there is no variables which should be included in quadratic form and thereby in a non-linear form.
+
+
+Next we look at the distribution of the error term. We do this by plotting the standard residuals against the theoretical quantiles, and also in a histrogram of residuals. Lastly we test it manually using the jarque bera test:
 
 ```{r}
 plot(reg, 2)
 ```
-- This plot shows, if the residuals are normally distributed
-- If they fit nicely around the dottet line, then they are normally distributed 
-- Verifies MLR 6
-- You could also plot a histogram of the residuals!
+It seems that the residuals fit nicely around the dottet line, which means that they are normally distributed. This indicates that MLR 6 is fullfilled. This conclusion is also crucial for doing hypothesis testing, because the MLR6 normallyty distribtuion has to be true to do this. This means that we can use a t-statistic as well as an F-statistic for drawing inference.
 
+
+We can also do this with a histrogram where the results are the same: the residuals seems to be normal distributed, however the histrogram contains some outliers which can infer with the model:
+```{r}
+hist(residuals)
+```
+
+And then manually with a jarque bera test:
+```{r}
+jarque.bera.test(reg$residuals)
+```
+$$H0: u \sim N(0,\sigma^2) $$
+The p-value is below the 5% significance level meaning that we reject H0, and thereby the residuals are not normally distributed. This contradicts the above conclusion with the graphical control of the model. Here the conclusion was that the residuals where normally distributed.
+
+
+Next we make a plot to test for MLR5 to test for (homoscedacity).
 ```{r}
 plot(reg, 3)
 ```
-- This one checks for homoskedasticity
-- -The dots are equally sread around a horizontal line, indicating, that we have homoskedasticity
-- They are randomly spread and does not increase with the fitted values 
+Since the standardized residuals are equally sread around the horizontal line (the predicters), which indicates that the model exhibits homoskedasticity. They are randomly spread meaning that the distance between theese and the horizontal line does not increase with the fitted values.
+
+Lastly we look at if there are relevant outliers in the model which need to be accounted for:
 
 ```{r}
 plot(reg, 5)
 ```
-- THis one check, if we have any outliers of major impact
-_ Cook's distance lines are not even present, meaning that there are no outliers of impact. 
+It seems that there is no outliers which have a major impact on the results.
+This can be concluded using the Cook's distance lines which are not even present in the above, meaning that there are no outliers of impact.
 
 #3. Test for heteroskedasticitet vha. Breusch-Pagan-testet og specialudgaven af White-testet.
 

@@ -32,7 +32,7 @@ We fail to reject H0 meaning that the variables are jointly significant. All var
 
 2. Udfør grafisk modelkontrol.
 ```{r}
-plot(reg,1) #Jo fladere rød linje jo mere er residualerne non linear
+plot(reg,1) #Jo fladere rød linje jo mere er modellen non linear
 ```
 It seems that there is no need for including non linear variables
 
@@ -61,7 +61,7 @@ plot(reg,5) #identificere om der er outliers som har betydning for resultatet
 No problem with outliers here - we can not see the cooks distance lines
 
 
-3. Test for heteroskedasticitet vha. Breusch-Pagan-testet og specialudgaven af White-testet.
+#3. Test for heteroskedasticitet vha. Breusch-Pagan-testet og specialudgaven af White-testet.
 
 LM test:
 ```{r}
