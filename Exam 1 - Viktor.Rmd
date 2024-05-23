@@ -36,14 +36,10 @@ reg=lm(log(salary)~educ+log(salbegin)+male+minority)
 summary(reg)
 ```
 First, we are going to comment of the estimates: 
-We can see that if education increases by one unit, then salary increases by 2,3 pct. Furthermore, we can see that the estimate is significant down to a 0.1 pct. significance level. 
 
-We can see from the model that salary increases the most when the beginning salary increases with 1% holding everything else fixed.
-We can also see that a male gets 4% higher salary than females holding everything else fixed.
-- All are significant
-- Adjusted R^square of 80%
-- They are jointly significant
-- All have the expected signs
+We can see that if education increases by one unit, then salary increases by 2,3 pct, holding every other parameter fixed. Furthermore, we can see that the estimate is significant down to a 0.1 pct. significance level. Next, we can see that a 1 pct. increase in beginning salaly leads to a 0,82 pct. increase in salary. This estimate is significant down to a 0.1 pct. significance level, as well. We have also included two dummy variables in our regression, male and minority. The estimate on male is 0.04, meaning that a male gets 4% higher salary than females (which is the reference group) holding everything else fixed. The estimate on minority is -0.04, which means that a minority gets 4% lower salary than non-minorities (which is the reference group) holding everything else fixed. Both of these estiamtes are significant down to a 5 pct. significance level. 
+
+We can observe that all variables have the expected sign on the estimates. Further, the R-squared and adjusted R-squared are both around 80 pct, meaning that the model fits 80% of the data. The R-square indicates how well the model fits the data, meaning that it is a meausre of how good the model is. The adjusted R-sqaure also takes the number of independent variables into account. The F-statistic in the model is 481,3 with a p-value of 2.2e-16, meaning that the varibles are jointly significant. 
 
 #Opgave 2. - Udfør grafisk modelkontrol
 
