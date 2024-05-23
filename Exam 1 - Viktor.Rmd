@@ -92,16 +92,28 @@ This can be concluded using the Cook's distance lines which are not even present
 
 #3. Test for heteroskedasticitet vha. Breusch-Pagan-testet og specialudgaven af White-testet.
 
+If the model exhibits heteroskedasticity, then the variance of the error term is not constant for all independent variables. As mentioned above, this would have some implications for our inference tests. To test for heteroskedasticity we peform the Breusch-Pagan-test and White test manually. The formula that we are going to use is the following: 
+
+$$LM = R^2_{\hat{u}[u]} . n$$
+
+The hypotheses we test for is: 
+
+$$H_0: Var(u|x_1 ,x_2,...,x_k) = \sigma^2$$ 
+$$H_1: Var(u|x_1 ,x_2,...,x_k) \neq \sigma^2$$
+
+First of all, we are going to obtain the residuals from our original regression model i question 1 (reg), and then we will square them. The squared residuals works as a proxy for the variance of the error term. 
 ```{r}
 residuals <- resid(reg)
 residuals_squared <- residuals^2
 ```
 
+Then we regress the squared residuals on all the independent variables from the original model, which is: Education, log of salary begin, male and minority. 
 ```{r}
 res_mod <- lm(residuals_squared ~ educ + log(salbegin) + male + minority)
 summary(res_mod)
 ```
 
+Then we obtain the R-squared from the model above (res_model) and define the number of observations (n). Then we can simply use the formula given in the beginning to calculate our lm-test. 
 ```{r}
 multiple_r_squared <- 0.02923
 n <- nrow(data1)
@@ -109,27 +121,58 @@ lm_test <- multiple_r_squared*n
 lm_test
 ```
 
+Our LM-test i 13,9. To see whether we reject our H0 or not, we calculate the p-value for a chi-square distribution with a lm-test of 13,9. This is done in the code below.
 ```{r}
 p_value_lmtest <- 1-pchisq(lm_test,4)
 p_value_lmtest
 ```
 
+Our p-value is 0.007, which is below a significance level of 5 pct., which means that we clearly rejects the H0, meaning that the model exhibits heteroskedasticity. This contradicts the above conclusion in question 2 with the graphical control of the model. Here the conclusion was that the model exhibited homoskedasticity. To test whether our results are correct, we can perform the Breusch-Pagan test in R automatically. This is done below, and the results correspond to manually performed results. 
 ```{r}
 library(lmtest)
 bptest(reg)
 ```
-- We reject H0, so there is Heteroskedasticity
-- We cannot use the graphical model control
 
-We now use the White-Test: 
+Lastly, we use the White-Test to test for heteroskedasticity as well. The White-test tests whether a relationship between the independent variables has a influence on the variance of the error term. For this we will use the simple white test, which is tested by the regression model of the following form: 
 
+$$\hat{u}^2=\delta_0+\delta_1\hat{y}+\delta_2\hat{y}^2+error$$
+Then we will use the same formula and hypotheses as we did with the Breasch-Pagan test.
+
+$$LM = R^2_{\hat{u}[u]} . n$$
+
+The hypotheses we test for is: 
+
+$$H_0: Var(u|x_1 ,x_2,...,x_k) = \sigma^2$$
+
+$$H_1: Var(u|x_1 ,x_2,...,x_k) \neq \sigma^2$$
+
+First of all, we are going to obtain the fitted values from the original regression model (reg). Then we square the fitted valus. 
 ```{r}
 y_hat <- reg$fitted.values
 y_hatsquared <- reg$fitted.values^2
+```
+
+Then we are going to do the regression based on the equation above. We then obtain the R-squared from the summary of the model to calculate the LM-test. 
+```{r}
 white_test <- lm(residuals_squared ~ y_hat + y_hatsquared)
 summary(white_test)
+multiple_r_squared_white <- 0.02923
 ```
-- We reject H0 again!
+
+We calculate the LM-test with the following code:
+```{r}
+lm_test_white <- multiple_r_squared_white*n
+lm_test_white
+```
+
+Our LM-test is 13,9, and then we calculate the p-value to determine whether we reject the H0 or not. 
+
+```{r}
+p_value_lmtest_white <- 1-pchisq(lm_test_white,4)
+p_value_lmtest_white
+```
+
+Our p-value is, as in the Breusch-Pagan test, 0.007, which is below a significance level of 5 pct., which means that we clearly rejects the H0, meaning that the model exhibits heteroskedasticity. The results are the same for the Breusch-Pagan test and the simple White test. 
 
 #4. Beregn robuste standardfejl for modellen og sammenlign med resultaterne i spørgsmål 1.
 
