@@ -61,7 +61,19 @@ Second assumption:
 
 #4. Test om uddannelse er endogen.
 
-Den laver vi næste gang
+We first take the estimated residuals from the reduced form equation: 
+```{r}
+v_hat <- resid(reduced1)
+```
+
+We then include the residuals in the original model: 
+```{r}
+test_for_endogenitet<-lm(learnings~educ+exp+male+ethblack+ethhisp+v_hat)
+summary(test_for_endogenitet)
+```
+- If we take a 10% signifikans level, then we fail to reject the null hypothesis, and we should not suspect a endogeniety problem
+- But due to the fact, that the p-value is close to the threshold, then it is possible that it is just some poor IV's that we have chosen 
+- Fx. if we remove siblings as an IV, then we would reject the null at a 10% signifikance level!
 
 #5. Estimer modellen vha. 2SLS hvor du gør brug af de tre beskrevne instrumenter. Sammenlign med resultaterne i spørgsmål 1.
 
@@ -83,6 +95,30 @@ summary(twoslsautomatisk)
 screenreg(list(OLS = model1, Two_SLS = twoslsautomatisk),digits = 4)
 ```
 
+#6. Udfør overidentifikationstestet. Hvad konkluderer du?
+
+First step: First we obtain the residuals from our 2SLS regression:
+```{r}
+twoslsautomatisk_res <- resid(twoslsautomatisk)
+```
+
+Second step: 
+```{r}
+res_aux <- lm(twoslsautomatisk_res ~ exp + male + ethblack + ethhisp + feduc + meduc + siblings)
+r_squared <- summary(res_aux)$r.squared
+n <- nobs(res_aux)
+```
+
+We then calculate our test statistic and p-value: 
+```{r}
+test_stat <- n*r_squared
+pval <- 1-pchisq(test_stat, 2)
+test_stat
+pval
+```
+
+Our null hypothesis is rejected, which means that either 1, 2 or all IV's are endogenous 
+
 #7. Udfør hele analysen igen hvor du kun bruger meduc og feduc som instrumenter. Ændrer det på dine konklusioner?
 
 We first test, if you can use these two instruments. 
@@ -99,6 +135,20 @@ linearHypothesis(reduced2, c("meduc=0", "feduc=0"))
 ```
 We reject H0, meaning that they are jointly different from zero.
 
+We now test if we really have an endogenity problem:
+
+We first take the estimated residuals from the reduced form equation: 
+```{r}
+v_hat2 <- resid(reduced2)
+```
+
+We then include the residuals in the original model: 
+```{r}
+test_for_endogenitet2<-lm(learnings~educ+exp+male+ethblack+ethhisp+v_hat2)
+summary(test_for_endogenitet2)
+```
+- If we take a 10% signifikans level, then we reject the null hypothesis, and we should suspect an endogeniety problem
+
 We now use the 2SLS, when we only include the two instruments
 ```{r}
 twoslsautomatisk2 <- ivreg(learnings ~ educ + exp + male + ethblack + ethhisp | meduc + feduc + exp + male + ethblack + ethhisp)
@@ -109,3 +159,26 @@ We now compare the two 2SLS, where we have used different instrument variables:
 ```{r}
 screenreg(list(Two_SLS_3IV = twoslsautomatisk, Two_SLS_2IV = twoslsautomatisk2),digits = 4)
 ```
+
+We now make an overidentification test to see if we have any problems with the IV's:
+
+First step: First we obtain the residuals from our 2SLS regression:
+```{r}
+twoslsautomatisk_res2 <- resid(twoslsautomatisk2)
+```
+
+Second step: 
+```{r}
+res_aux2 <- lm(twoslsautomatisk_res2 ~ exp + male + ethblack + ethhisp + feduc + meduc)
+r_squared2 <- summary(res_aux2)$r.squared
+n2 <- nobs(res_aux2)
+```
+
+We then calculate our test statistic and p-value: 
+```{r}
+test_stat2 <- n2*r_squared2
+pval2 <- 1-pchisq(test_stat2, 1)
+test_stat2
+pval2
+```
+
