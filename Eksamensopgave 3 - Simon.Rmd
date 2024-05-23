@@ -58,13 +58,23 @@ Significant result meaning that H0 is rejected meaning that siblings, meduc and 
 And we can assume that $cov(z,u)=0$ holds because ability is not correlated with amount of siblings, mothers education and fathers education.
 
 #4. Test om uddannelse er endogen.
-Laves næste gang
 
 ```{r}
 res<-residuals(stage1)
 step2<-lm(learnings~educ+exp+male+ethblack+ethhisp+res)
 coeftest(step2)
 ```
+We fail to reject: $H0:\delta=0$ meaning that delta could be equal to zero and theryby we cannot conclude that there is an endogenous problem in the model. However it could be because of we include the wrong IV's in the model if we exclude siblings the results would be different:
+
+```{r}
+stage11 = lm(educ~exp+male+ethblack+ethhisp+meduc+feduc)
+res11<-residuals(stage11)
+step22<-lm(learnings~educ+exp+male+ethblack+ethhisp+res11)
+coeftest(step22)
+```
+
+If we exclude siblings then we can almost reject our null hyphothesis down to a 5% significance level and therby say that there is a endogenous problem in the model. So this could seem that siblings is not a good IV variable.
+
 
 #5. Estimer modellen vha. 2SLS hvor du gør brug af de tre beskrevne instrumenter. Sammenlign med resultaterne i spørgsmål 1.
 Stage 2: Now we use fitted values of educ as an instrumental variable
@@ -86,11 +96,78 @@ sls = ivreg(learnings ~ educ + exp + male + ethblack + ethhisp | exp + male + et
 screenreg(list(OLS = model1, Two_SLS = sls), digits = 4)
 ```
 
+#6. Udfør overidentifikationstestet. Hvad konkluderer du?
+```{r}
+res_2sls<-residuals(stage2)
+res.aux <- lm(res_2sls ~ exp + male + ethblack + ethhisp + siblings + meduc + feduc)
+
+r2 <- summary(res.aux)$r.squared; 
+n <- nobs(res.aux) 
+chi_stat <- n*r2; 
+pval <- 1-pchisq(chi_stat,2); pval
+
+```
+H0: All IV's are uncorrelated with u (meaning that all IV's are exogenous)
+We reject our null hyphothesis meaning that one or more IV's are correlated with the error term and thereby bad IV's because they are also endogenous. 
+
 
 #7. Udfør hele analysen igen hvor du kun bruger meduc og feduc som instrumenter. Ændrer det på dine konklusioner?
-Kopier fra Viktor
 
 
+#7.3: Er siblings,meduc og feduc brugbare som instrument variable?
+We first test, if you can use these two instruments. 
+
+We set up the conditions regarding IV's. 
+- Cov(z,x) \= 0
+- Cov(z,u) = 0 
+Dette skal så gælde for alle variablene
+We can do the reduced eqation to test if they are good IV's regarding the first assuption above. 
+
+```{r}
+reduced2 <- lm(educ ~ meduc + feduc + exp + male + ethblack + ethhisp)
+linearHypothesis(reduced2, c("meduc=0", "feduc=0"))
+```
+We reject H0, meaning that they are jointly different from zero.
+
+#7.4 test if education is endogneous for the new model:
+We test again if education is endogenous for the new model:
+```{r}
+stage11 = lm(educ~exp+male+ethblack+ethhisp+meduc+feduc)
+res11<-residuals(stage11)
+step22<-lm(learnings~educ+exp+male+ethblack+ethhisp+res11)
+coeftest(step22)
+```
+If we exclude siblings then we can almost reject our null hyphothesis down to a 5% significance level and therby say that there is a endogenous problem in the model.
+
+
+#7.5 Estimer modellen vha. 2SLS hvor du gør brug af de to beskrevne instrumenter. Sammenlign med resultaterne i spørgsmål 1.
+
+We now use the 2SLS, when we only include the two instruments
+```{r}
+twoslsautomatisk2 <- ivreg(learnings ~ educ + exp + male + ethblack + ethhisp | meduc + feduc + exp + male + ethblack + ethhisp) #automatisk 
+
+educ_fitted_2<-fitted(reduced2)
+
+stage22<-lm(learnings~educ_fitted_2+exp+male+ethblack+ethhisp)#manuelt
+screenreg(list(TwoSLS_auto = twoslsautomatisk2, Two_SLS = stage22), digits = 4)
+```
+
+We now compare the two 2SLS, where we have used different instrument variables with the original OLS model: 
+
+```{r}
+screenreg(list(Two_SLS_3IV = sls, Two_SLS_2IV = twoslsautomatisk2, OLS = model1), digits = 4)
+```
+#7.6 Udfør overidentifikationstestet. Hvad konkluderer du?
+```{r}
+res_2sls_2<-residuals(twoslsautomatisk2)
+res.aux_1 <- lm(res_2sls_2 ~ exp + male + ethblack + ethhisp + meduc + feduc)
+
+r2_2 <- summary(res.aux_1)$r.squared; 
+n_2 <- nobs(res.aux_1) 
+chi_stat_2 <- n_2*r2_2; 
+pval_2 <- 1-pchisq(chi_stat_2,1); pval_2
+
+```
 
 
  
