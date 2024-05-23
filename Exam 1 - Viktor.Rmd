@@ -2,7 +2,9 @@
 title: "Exam 1 - Viktor"
 author: "Viktor Damm"
 date: "2024-05-02"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -27,11 +29,16 @@ minority<-data1$minority
 log(salary) = β0 + β1educ + β2log(salbegin) + β3male + β4minority + u
 
 #1. Estimer modellen vha. OLS. Kommenter på outputtet og fortolk resultaterne.
+
+First of all, we are going the estimate the model using a simple OLS regression in R. This is done with the following code:
 ```{r}
 reg=lm(log(salary)~educ+log(salbegin)+male+minority)
 summary(reg)
 ```
-We can see that salary increases the most when the beginning salary increases with 1% holding everything else fixed.
+First, we are going to comment of the estimates: 
+We can see that if education increases by one unit, then salary increases by 2,3 pct. Furthermore, we can see that the estimate is significant down to a 0.1 pct. significance level. 
+
+We can see from the model that salary increases the most when the beginning salary increases with 1% holding everything else fixed.
 We can also see that a male gets 4% higher salary than females holding everything else fixed.
 - All are significant
 - Adjusted R^square of 80%
