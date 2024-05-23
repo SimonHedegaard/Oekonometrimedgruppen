@@ -82,8 +82,12 @@ We can do this manually as well
 ```{r}
 library(sandwich); library(texreg)
 sls = ivreg(learnings ~ educ + exp + male + ethblack + ethhisp | exp + male + ethblack + ethhisp + siblings + meduc + feduc)
-sls
+screenreg(list(OLS = model1, Two_SLS = sls), digits = 4)
 ```
+
+
+#7. Udfør hele analysen igen hvor du kun bruger meduc og feduc som instrumenter. Ændrer det på dine konklusioner?
+Kopier fra Viktor
 
 
 
