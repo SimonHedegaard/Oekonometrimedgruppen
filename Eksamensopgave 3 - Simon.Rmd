@@ -57,16 +57,17 @@ siblings = meduc = feduc = 0
 Significant result meaning that H0 is rejected meaning that siblings, meduc and feduc are jointyly significant for the model.
 And we can assume that $cov(z,u)=0$ holds because ability is not correlated with amount of siblings, mothers education and fathers education.
 
-#4. Testomuddannelseerendogen.
+#4. Test om uddannelse er endogen.
 Laves næste gang
 
 ```{r}
-
+res<-residuals(stage1)
+step2<-lm(learnings~educ+exp+male+ethblack+ethhisp+res)
+coeftest(step2)
 ```
 
 #5. Estimer modellen vha. 2SLS hvor du gør brug af de tre beskrevne instrumenter. Sammenlign med resultaterne i spørgsmål 1.
 Stage 2: Now we use fitted values of educ as an instrumental variable
-
 
 ```{r}
 stage2<-lm(learnings~educ_fitted+exp+male+ethblack+ethhisp)
