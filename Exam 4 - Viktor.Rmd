@@ -1,0 +1,21 @@
+---
+title: "Exam 4 - Viktor"
+author: "Viktor Damm"
+date: "2024-05-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readr)
+library(AER)
+library(foreign)
+library(car)
+library(sandwich)
+library(texreg)
+data4 <- read_csv("data4.csv")
+```
+
