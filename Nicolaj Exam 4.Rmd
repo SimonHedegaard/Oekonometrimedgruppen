@@ -4,27 +4,157 @@ author: "Nicolaj"
 date: "2024-05-28"
 output: html_document
 ---
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r}
+rm(list=ls(all=T))
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+library(readr)
+library(AER)
+library(foreign)
+library(car)
+library(sandwich)
+library(texreg)
+library(lmtest)
+data4 <- read_csv("data4.csv")
+participation <- data4$participation
+income <- data4$income
+age <- data4$age
+agesq <- data4$agesq
+educ <- data4$educ
+youngkids <- data4$youngkids
+oldkids <- data4$oldkids
+foreing <- data4$foreign
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+#1. Opstil en lineær regressionsmodel for participation hvor du bruger de beskrevne forklarende variable.
+##(a) Estimer modellen vha. OLS og kommenter på resultaterne.
+
+```{r}
+ols_model <- lm(participation~income+age+agesq+educ+youngkids+oldkids+foreing)
+summary(ols_model)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+##(b) Test om den partielle effekt af uddannelse er forskellig fra nul.
+Test hypotesen H0 : 
+```{r}
+t_stat<-(0.00677)/0.00596
+c<-qt(0.05,nrow(data4)-1)
+p_val<-2*(1-pt(t_stat,nrow(data4)))
+p_val
+```
+##(c) Test om den partielle effekt af alder er forskellig fra nul.
+```{r}
+t_stat1<-(0.063)/0.012
+c1<-qt(0.05,nrow(data4)-1)
+p_val1<-2*(1-pt(t_stat1,nrow(data4)))
+p_val1
+```
+
+#2. Opstil både en logit- og en probit-model for participati on hvor du bruger de beskrevne forklarende variable.
+##(a) Estimer modellerne.
+```{r}
+logit <- glm(participation~income+age+agesq+educ+youngkids+oldkids+foreing,
+family = binomial(link = "logit"), data = data4)
+probit <- glm(participation~income+age+agesq+educ+youngkids+oldkids+foreing,
+family = binomial(link = "probit"), data = data4)
+library(texreg)
+screenreg(list( Logit = logit, Probit = probit), digits = 4)
+```
+
+##(b) Test om den partielle effekt af uddannelse er forskellig fra nul.
+```{r}
+logit_t_stat<-(0.0386)/0.0302
+logit_c<-qt(0.05,nrow(data4)-1)
+logit_p_val<-2*(1-pt(logit_t_stat,nrow(data4)))
+logit_p_val
+```
+
+```{r}
+probit_t_stat<-(0.0231)/0.0181
+probit_c<-qt(0.05,nrow(data4)-1)
+probit_p_val<-2*(1-pt(probit_t_stat,nrow(data4)))
+probit_p_val
+```
+##(c) Test om den partielle effekt af alder er forskellig fra nul vha. et likelihoodratio-test.
+```{r}
+## Pseudo R^2
+logit <- glm(participation~income+age+agesq+educ+youngkids+oldkids+foreing,
+family = binomial(link = "logit"), data = data4)
+probit <- glm(participation~income+age+agesq+educ+youngkids+oldkids+foreing,
+family = binomial(link = "probit"), data = data4)
+
+logitR <- glm(participation~income+educ+youngkids+oldkids+foreing,
+family = binomial(link = "logit"), data = data4)
+probitR <- glm(participation~income+educ+youngkids+oldkids+foreing,
+family = binomial(link = "probit"), data = data4)
+
+lrR <- 2 * (logLik(probit) - logLik(probitR))
+lrR # The df are not true - these are really 2
+## 'log Lik.' 63.01 (df=8)
+pval_R <- pchisq(lrR, df = 2, lower.tail = F)
+pval_R # Suggests surely that we must reject H_0 (as expected)
+## 'log Lik.' 2.074e-14 (df=8)
+#lr svarer til f stat, det er likelihoods ratio!!!!!!!!!!!!!
+```
+```{r}
+
+lrL <- 2 * (logLik(logit) - logLik(logitR))
+lrL # The df are not true - these are really 2
+## 'log Lik.' 63.01 (df=8)
+pval_L <- pchisq(lrL, df = 2, lower.tail = F)
+pval_L # Suggests surely that we must reject H_0 (as expected)
+## 'log Lik.' 2.074e-14 (df=8)
+
+```
+
+#3. Vi vil gerne sammenligne den partielle effekt af income på tværs af modellerne. Beregn average partial effect (APE) og kommenter på resultaterne.+
+
+```{r}
+library(mfx)
+## Average Partial Effect - logit
+ape_logit <- logitmfx(logit, data = data4, atmean = F)
+## Average Partial Effect - probit
+ape_probit <- probitmfx(probit, data = data4, atmean = F)
+screenreg(list(OLS = ols_model,Logit_APE = ape_logit, Probit_APE = ape_probit), digits = 4)
+```
+#4. Vi vil gerne sammenligne den partielle effekt af foreign på tværs af modellerne. Beregn APE og kommenter på resultaterne.
+Because Foreign is a diskrete variable, and other variable is continious
+```{r}
+cdata <- cbind(1, as.matrix(data4[, c("income","age","agesq","educ","youngkids","oldkids","foreing")]))
+cdata1 <- cdata
+cdata1[, 7] <- 1
+cdata2 <- cdata
+cdata2[, 7] <- 0
+pcoef <- probit$coefficients
+mean(pnorm(cdata1 %*% pcoef) - pnorm(cdata2 %*% pcoef))
+
+```
+
+
+#5. Hvorfor er APE at foretrække frem for partial effect at the average (PEA)?
+
+2. Hvorfor er APE at foretrække frem for PEA?
+a. Repræsentativitet:
+
+APE: Fordi APE tager gennemsnittet af de marginale effekter over hele fordelingen af de uafhængige variabler, giver det et mere repræsentativt mål for variablens effekt i hele populationen.
+PEA: PEA måler kun effekten ved den gennemsnitlige værdi af de uafhængige variabler. Hvis data er ikke-lineære eller indeholder interaktionseffekter, kan PEA være misvisende, da det kun reflekterer en specifik punktværdi og ikke de variationer, der findes i hele datadistributionen.
+b. Robusthed:
+
+APE: APE er robust over for variationer og ekstreme værdier, da det tager højde for hele datasættet.
+PEA: PEA kan være påvirket af ekstreme værdier eller outliers i gennemsnittet af de uafhængige variabler, hvilket kan fordreje den estimerede effekt.
+c. Fortolkningsmæssig klarhed:
+
+APE: APE er lettere at fortolke som den gennemsnitlige effekt af en variabel på tværs af forskellige værdier af de uafhængige variabler. Dette gør det nemmere at kommunikere resultaterne til en bredere målgruppe.
+PEA: PEA kan være sværere at fortolke og kommunikere, da det kun giver information om effekten ved et specifikt punkt (gennemsnittet), hvilket måske ikke er repræsentativt for den generelle population.
+d. Praktisk anvendelse:
+
+APE: I mange praktiske scenarier, især i politiske og økonomiske analyser, er det vigtigere at forstå den gennemsnitlige effekt, da det giver en bedre forståelse af den overordnede tendens i dataene.
+PEA: PEA kan være nyttigt i specifikke sammenhænge, men det begrænsede perspektiv gør det mindre praktisk i bredere analyser.
+Konklusion
+Selvom både APE og PEA har deres plads i statistiske analyser, er APE ofte at foretrække, fordi det giver et mere repræsentativt, robust og fortolkningsvenligt mål for effekten af en variabel på tværs af hele fordelingen af de uafhængige variabler. Dette gør APE mere nyttigt og praktisk i de fleste analyser og beslutningstagninger.
+
+
+#6. Sammenlign modellernes evne til at prædiktere ved at beregne percent correctly predicted for hver model.
