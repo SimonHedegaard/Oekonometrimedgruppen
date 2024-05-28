@@ -3,23 +3,159 @@ title: "Eksamensopgave 4 - Simon"
 output: html_document
 date: "2024-05-28"
 ---
+```{r}
+library(readr)
+library(AER)
+library(foreign)
+library(car)
+library(sandwich)
+library(texreg)
+data4 <- read_csv("data4.csv")
+```
 
-#1. Opstilenlineærregressionsmodelforparticipationhvordubrugerdebeskrevne forklarende variable.
+
+
+
+#1. Opstil en lineær regressionsmodel for participation hvor du bruger de beskrevne forklarende variable.
 
 $$participation=income+age+agesq+educ+youngkids+oldkids+foreign+u$$
-
-
-#1. a: Estimermodellenvha.OLSogkommenterpåresultaterne.
 ```{r}
+participation<-data4$participation
+income<-data4$income
+age<-data4$age
+agesq<-data4$agesq
+educ<-data4$educ
+youngkids<-data4$youngkids
+oldkids<-data4$oldkids
+foreign<-data4$foreign
+```
 
+
+#1. a: Estimer modelle nvha.OLS og kommenter på resultaterne.
+```{r}
+OLS<-lm(participation~income+age+agesq+educ+youngkids+oldkids+foreign)
+summary(OLS)
 ```
 
 
 #1. b: Test om den partielle effekt af uddannelse er forskellig fra nul.
 ```{r}
-
+df<-OLS$df.residual #n-k-1
+t_stat<-(0.0067725-0)/0.0059615
+c<-qt(1-0.05,df)
+p_val<-2*(1-pt(t_stat,df))
+p_val
 ```
 
 
 
 #1. c: Test om den partielle effekt af alder er forskellig fra nul.
+```{r}
+df<-OLS$df.residual #n-k-1
+t_stat<-(0.0633852-0)/0.0128603
+c<-qt(0.05,df)
+p_val<-2*(1-pt(t_stat,df))
+p_val
+```
+
+
+
+#2 Opstil både en logit- og en probit-model for participation hvor du bruger de beskrevne forklarende variable.
+
+```{r}
+# Fitting the logistic regression model
+logit <- glm(participation ~ income + age + agesq + educ + youngkids + oldkids + foreign, family = binomial(link = "logit"))
+
+# Fitting the probit regression model
+probit <- glm(participation ~ income + age + agesq + educ + youngkids + oldkids + foreign, family = binomial(link = "probit"))
+
+# Loading the texreg package
+library(texreg)
+
+# Displaying the results
+screenreg(list(Logit = logit, Probit = probit), digits = 4)
+
+```
+
+#b. Test om den partielle effekt af uddannelse er forskellig fra nul.
+```{r}
+##logit:
+df<-logit$df.residual #n-k-1
+t_stat<-(0.0386174-0)/0.0301890
+c<-qt(0.05,df)
+p_val<-2*(1-pt(t_stat,df))
+p_val
+
+#probit:
+df<-probit$df.residual #n-k-1
+t_stat<-(0.0230920-0)/0.0180629
+c<-qt(0.05,df)
+p_val<-2*(1-pt(t_stat,df))
+p_val
+
+
+```
+
+#c. Test om den partielle effekt af alder er forskellig fra nul vha. et likelihood ratio-test (alder er både almindelig og squared)
+
+#probit
+```{r}
+## Pseudo R^2
+probitR <- glm(participation ~ income + educ + youngkids + oldkids + foreign, family = binomial(link = "probit"), data = data4)
+lr <- 2 * (logLik(probit) - logLik(probitR)) #hvad der svarer til en F værdi
+lr # The df are not true - these are really 2
+pval <- pchisq(lr, df = 2, lower.tail = F)
+pval
+```
+
+
+#logit
+```{r}
+## Pseudo R^2
+logitR <- glm(participation ~ income + educ + youngkids + oldkids + foreign, family = binomial(link = "logit"), data = data4)
+lr <- 2 * (logLik(logit) - logLik(logitR)) #hvad der svarer til en F værdi
+lr # The df are not true - these are really 2
+pval <- pchisq(lr, df = 2, lower.tail = F)
+pval
+```
+
+
+#3. Vi vil gerne sammenligne den partielle effekt af income på tværs af mod- ellerne. Beregn average partial effect (APE) og kommenter på resultaterne.
+```{r}
+library(mfx)
+## Average Partial Effect - logit
+ape_logit <- logitmfx(logit, data = data4, atmean = F)
+## Average Partial Effect - probit
+ape_probit <- probitmfx(probit, data = data4, atmean = F) 
+screenreg(list(Logit_APE = ape_logit, Probit_APE = ape_probit, OLS = OLS), digits = 4)
+```
+
+#4 Vi vil gerne sammenligne den partielle effekt af foreign på tværs af modellerne. Beregn APE og kommenter på resultaterne.
+```{r}
+cdata <- cbind(1, as.matrix(data4[, c("income", "age", "agesq", "educ", "youngkids", "oldkids", "foreign")]))
+cdata1 <- cdata
+cdata1[, 8] <- 1
+cdata2 <- cdata
+cdata2[, 8] <- 0
+pcoef <- probit$coefficients
+mean(pnorm(cdata1 %*% pcoef) - pnorm(cdata2 %*% pcoef))
+
+```
+
+#5. Hvorfor er APE at foretrække frem for partial effect at the average(PEA)?
+
+#6. Sammenlign modellernes evne til at prædiktere ved at beregne percent correctly predicted for hver model.
+```{r}
+## Percently Correctly Predicted
+y <- data4["participation"]
+OLSpred <- 100 * mean((OLS$fitted > 0.5) == y) 
+logitpred <- 100 * mean((logit$fitted > 0.5) == y) 
+probitpred <- 100 * mean((probit$fitted > 0.5) == y) 
+print(c(OLSpred, logitpred, probitpred))
+```
+
+
+
+
+
+
