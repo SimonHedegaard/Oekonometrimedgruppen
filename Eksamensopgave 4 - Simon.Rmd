@@ -3,3 +3,23 @@ title: "Eksamensopgave 4 - Simon"
 output: html_document
 date: "2024-05-28"
 ---
+
+#1. Opstilenlineærregressionsmodelforparticipationhvordubrugerdebeskrevne forklarende variable.
+
+$$participation=income+age+agesq+educ+youngkids+oldkids+foreign+u$$
+
+
+#1. a: Estimermodellenvha.OLSogkommenterpåresultaterne.
+```{r}
+
+```
+
+
+#1. b: Test om den partielle effekt af uddannelse er forskellig fra nul.
+```{r}
+
+```
+
+
+
+#1. c: Test om den partielle effekt af alder er forskellig fra nul.
