@@ -125,9 +125,9 @@ Because Foreign is a diskrete variable, and other variable is continious
 ```{r}
 cdata <- cbind(1, as.matrix(data4[, c("income","age","agesq","educ","youngkids","oldkids","foreing")]))
 cdata1 <- cdata
-cdata1[, 7] <- 1
+cdata1[, 8] <- 1
 cdata2 <- cdata
-cdata2[, 7] <- 0
+cdata2[, 8] <- 0
 pcoef <- probit$coefficients
 mean(pnorm(cdata1 %*% pcoef) - pnorm(cdata2 %*% pcoef))
 
@@ -158,3 +158,14 @@ Selvom både APE og PEA har deres plads i statistiske analyser, er APE ofte at f
 
 
 #6. Sammenlign modellernes evne til at prædiktere ved at beregne percent correctly predicted for hver model.
+
+
+```{r}
+## Percently Correctly Predicted
+y <- data4["participation"]
+olspred <- 100 * mean((ols_model$fitted > 0.5) == y)
+logitpred <- 100 * mean((logit$fitted > 0.5) == y)
+probitpred <- 100 * mean((probit$fitted > 0.5) == y)
+print(c(olspred, logitpred, probitpred))
+```
+
