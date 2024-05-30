@@ -100,6 +100,13 @@ Again we reject H0 meaning that the model contains hetroskedaticity
 
 
 4. Beregn robuste standardfejl for modellen og sammenlign med resultaterne i spørgsmål 1.
+
+$$
+\text{Var}(\hat{\beta}_j) = \frac{\sum_{i=1}^{n} \hat{r}_{ij}^2 \cdot \hat{u}_i^2}{(\text{SSR}_j)^2}
+$$
+
+
+
 ```{r}
 library(texreg)
 library(lmtest)
