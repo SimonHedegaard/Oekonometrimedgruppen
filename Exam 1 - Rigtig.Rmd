@@ -1,0 +1,327 @@
+---
+title: "Exam 1 - Rigtig"
+author: "Viktor Damm"
+date: "2024-05-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(sandwich)
+library(foreign)
+library(texreg)
+library(car)
+library(lmtest)
+library(zoo)
+library(tseries)
+```
+
+```{r}
+data1 <- read.csv("~/Desktop/Oecon/4. semester/Økonometri/Econ Exam/data1.csv")
+salary<-data1$salary
+educ<-data1$educ
+salbegin<-data1$salbegin
+male<-data1$male
+minority<-data1$minority
+```
+
+log(salary) = β0 + β1educ + β2log(salbegin) + β3male + β4minority + u
+
+#1. Estimer modellen vha. OLS. Kommenter på outputtet og fortolk resultaterne.
+
+First of all, we are going the estimate the model using a simple OLS regression in R. This is done with the following code:
+```{r}
+reg=lm(log(salary)~educ+log(salbegin)+male+minority)
+summary(reg)
+```
+First, we are going to comment of the estimates: 
+
+We can see that if education increases by one unit, then salary increases by 2,3 pct, holding every other parameter fixed. Furthermore, we can see that the estimate is significant down to a 0.1 pct. significance level. Next, we can see that a 1 pct. increase in beginning salaly leads to a 0,82 pct. increase in salary. This estimate is significant down to a 0.1 pct. significance level, as well. We have also included two dummy variables in our regression, male and minority. The estimate on male is 0.04, meaning that a male gets 4% higher salary than females (which is the reference group) holding everything else fixed. The estimate on minority is -0.04, which means that a minority gets 4% lower salary than non-minorities (which is the reference group) holding everything else fixed. Both of these estiamtes are significant down to a 5 pct. significance level. 
+
+We can observe that all variables have the expected sign on the estimates. Further, the R-squared and adjusted R-squared are both around 80 pct, meaning that the model fits 80% of the data. The R-square indicates how well the model fits the data, meaning that it is a meausre of how good the model is. The adjusted R-sqaure also takes the number of independent variables into account. The F-statistic in the model is 481,3 with a p-value of 2.2e-16, meaning that the varibles are jointly significant. 
+
+#Opgave 2. - Udfør grafisk modelkontrol
+
+To answer the quastion we make 4 different graphic model control, because we find theese the most interesting for doing graphical control of the model:
+We make graphical control of the model to conclude wether the Gauss Markov assumptions are fullfiled.
+
+Firstly we plot the residuals agains the fitted values, to look at if it seems that there is a non-linear relationsship in the model:
+
+```{r}
+plot(reg, 1)
+```
+Since the dots are equally spread around a horizontal line, which indicates that we dont have any non-linear relationship, which we should account. 
+This is a sign of a well specified model, which means that there is no variables which should be included in quadratic form and thereby in a non-linear form.
+
+
+Next we look at the distribution of the error term. We do this by plotting the standard residuals against the theoretical quantiles, and also in a histrogram of residuals. Lastly we test it manually using the jarque bera test:
+
+```{r}
+plot(reg, 2)
+```
+It seems that the residuals fit nicely around the dottet line, which means that they are normally distributed. This indicates that MLR 6 is fullfilled. This conclusion is also crucial for doing hypothesis testing, because the MLR6 normallyty distribtuion has to be true to do this. This means that we can use a t-statistic as well as an F-statistic for drawing inference.
+
+
+We can also do this with a histrogram where the results are the same: the residuals seems to be normal distributed, however the histrogram contains some outliers which can infer with the model:
+```{r}
+hist(resid(reg))
+```
+
+And then manually with a jarque bera test:
+```{r}
+jarque.bera.test(reg$residuals)
+```
+$$H0: u \sim N(0,\sigma^2) $$
+The p-value is below the 5% significance level meaning that we reject H0, and thereby the residuals are not normally distributed. This contradicts the above conclusion with the graphical control of the model. Here the conclusion was that the residuals where normally distributed. 
+
+
+Next we make a plot to test for MLR5 to test for (homoscedacity).
+```{r}
+plot(reg, 3)
+```
+Since the standardized residuals are equally sread around the horizontal line (the predicters), which indicates that the model exhibits homoskedasticity. They are randomly spread meaning that the distance between theese and the horizontal line does not increase with the fitted values.
+
+Lastly we look at if there are relevant outliers in the model which need to be accounted for:
+
+```{r}
+plot(reg, 5)
+```
+It seems that there is no outliers which have a major impact on the results.
+This can be concluded using the Cook's distance lines which are not even present in the above, meaning that there are no outliers of impact.
+
+#3. Test for heteroskedasticitet vha. Breusch-Pagan-testet og specialudgaven af White-testet.
+
+If the model exhibits heteroskedasticity, then the variance of the error term is not constant for all independent variables. As mentioned above, this would have some implications for our inference tests. When heteroskedasticity is present, then the t-test and F-test do not have the t and F distributions, and therefore the obtained t-test and F-test will not be valid. To test for heteroskedasticity we peform the Breusch-Pagan-test and White test manually. The formula that we are going to use is the following: 
+
+$$LM = R^2_{\hat{u}[u]} . n$$
+
+The hypotheses we test for is: 
+
+$$H_0: Var(u|x_1 ,x_2,...,x_k) = \sigma^2$$ 
+$$H_1: Var(u|x_1 ,x_2,...,x_k) \neq \sigma^2$$
+
+First of all, we are going to obtain the residuals from our original regression model i question 1 (reg), and then we will square them. The squared residuals works as a proxy for the variance of the error term. 
+```{r}
+residuals <- resid(reg)
+residuals_squared <- residuals^2
+```
+
+Then we regress the squared residuals on all the independent variables from the original model, which is: Education, log of salary begin, male and minority. 
+```{r}
+res_mod <- lm(residuals_squared ~ educ + log(salbegin) + male + minority)
+summary(res_mod)
+```
+
+Then we obtain the R-squared from the model above (res_model) and define the number of observations (n). Then we can simply use the formula given in the beginning to calculate our lm-test. 
+```{r}
+multiple_r_squared <- 0.02923
+n <- nrow(data1)
+lm_test <- multiple_r_squared*n
+lm_test
+```
+
+Our LM-test i 13,9. To see whether we reject our H0 or not, we calculate the p-value for a chi-square distribution with a lm-test of 13,9. This is done in the code below.
+```{r}
+p_value_lmtest <- 1-pchisq(lm_test,4)
+p_value_lmtest
+```
+
+Our p-value is 0.007, which is below a significance level of 5 pct., which means that we clearly rejects the H0, meaning that the model exhibits heteroskedasticity. This contradicts the above conclusion in question 2 with the graphical control of the model. Here the conclusion was that the model exhibited homoskedasticity. To test whether our results are correct, we can perform the Breusch-Pagan test in R automatically. This is done below, and the results correspond to manually performed results. 
+```{r}
+library(lmtest)
+bptest(reg)
+```
+
+Lastly, we use the White-Test to test for heteroskedasticity as well. The White-test tests whether a relationship between the independent variables has a influence on the variance of the error term. For this we will use the simple white test, which is tested by the regression model of the following form: 
+
+$$\hat{u}^2=\delta_0+\delta_1\hat{y}+\delta_2\hat{y}^2+error$$
+Then we will use the same formula and hypotheses as we did with the Breasch-Pagan test.
+
+$$LM = R^2_{\hat{u}[u]} . n$$
+
+The hypotheses we test for is: 
+
+$$H_0: Var(u|x_1 ,x_2,...,x_k) = \sigma^2$$
+
+$$H_1: Var(u|x_1 ,x_2,...,x_k) \neq \sigma^2$$
+
+First of all, we are going to obtain the fitted values from the original regression model (reg). Then we square the fitted valus. 
+```{r}
+y_hat <- reg$fitted.values
+y_hatsquared <- reg$fitted.values^2
+```
+
+Then we are going to do the regression based on the equation above. We then obtain the R-squared from the summary of the model to calculate the LM-test. 
+```{r}
+white_test <- lm(residuals_squared ~ y_hat + y_hatsquared)
+summary(white_test)
+multiple_r_squared_white <- 0.02923
+```
+
+We calculate the LM-test with the following code:
+```{r}
+lm_test_white <- multiple_r_squared_white*n
+lm_test_white
+```
+
+Our LM-test is 13,9, and then we calculate the p-value to determine whether we reject the H0 or not. 
+
+```{r}
+p_value_lmtest_white <- 1-pchisq(lm_test_white,4)
+p_value_lmtest_white
+```
+
+Our p-value is, as in the Breusch-Pagan test, 0.007, which is below a significance level of 5 pct., which means that we clearly rejects the H0, meaning that the model exhibits heteroskedasticity. The results are the same for the Breusch-Pagan test and the simple White test. 
+
+#4. Beregn robuste standardfejl for modellen og sammenlign med resultaterne i spørgsmål 1.
+
+When heteroskedasticity is present in the model, we need to obtain heteroskedasticity-robust standard errors instead of the normal standrd errors for the estimator. This will make the standard erros more valid, and therefore the inference tests will be more valid. Manually, they can be computed by following formula: 
+
+$$
+\text{Var}(\hat{\beta}_j) = \frac{\sum_{i=1}^{n} \hat{r}_{ij}^2 \cdot \hat{u}_i^2}{(\text{SSR}_j)^2}
+$$
+
+We will however, calculate the heteroskedasticity-robust standard errors with a function in R. This has been done in the following code, where we have used the function, coeftest. 
+
+```{r}
+reg_robust <- coeftest(reg, vcov = vcovHC(reg, type = "HC0"))
+screenreg(list(OLS =reg, OLS_robust_se =reg_robust), digits =4)
+```
+We can in the left colomn observe the estimates with the heteroskedasticity-robust standard errors. From the model, it is clear that there is no big difference in the standard erros from the original model and the new model. The biggest difference in standard errors can be observed with the minority, with a difference of 0,0026. Furthermore, it can be seen that the inference results does not change for any of the variables. All variables are still significant at the same significance levels as the original model. We can therefore conclude, that heterosekdasticity is not very strong in this case.
+
+#5. Test hypotesen H0 : β2 = 1 mod alternativet H1 : β2 ̸= 1.
+
+For this question, we are using the following hypotheses: 
+
+$$H0:β_2 = 1$$
+$$H1:β_2 \neq1$$
+To answer the question, we are going to use the following formula: 
+
+$$
+t = \frac{\hat{\beta}_j - \beta_j}{se(\hat{\beta}_j)}
+$$
+
+We are using the values from the OLS_robust_se, and the results can be seen in the following code: 
+
+```{r}
+t_stat<-(0.8218-1)/0.0374
+t_stat
+```
+
+Our t-statistic is -4,76. To calculate the t-statsitic, we have used the robust standard error, which we calculated in question 4. The reasons for this has been explained above. 
+
+```{r}
+c<-qt(0.05/2, n-4-1)
+c
+p_value<- 2*pt(t_stat, n-4-1)
+p_value
+```
+
+In the above code, we have calculated our critical value and our p-value. Our critical value is -1,96, and our t-statistic is above this value. This means that we reject our H0 at a 5% significance level. This can also be seen looking at our p-value, which is 0,0000025. This is the probability getting a t-statistic that is more extreme, and therefore the lowest significance level at which we will reject out H0. This means that beta_2 is statistically different from 1. 
+
+#6. Test hypotesen H0 : β3 = β4 = 0.
+
+We are testing the following hypotheses: 
+
+$$H0:\beta_3 = \beta_4 = 1$$
+$$H1:\beta_3 = \beta_4 \neq1$$
+
+To to test the joint hypothesis, we have to use a F-test. The first formula below is the generel formula har obtaning the F-statistic. The second one is a simplified version, which is the one that we will use. 
+
+$$
+F = \frac{\left(SSR_r - SSR_{ur}\right)/q}{SSR_{ur}/\left(n - k - 1\right)}
+$$
+$$F=\frac{(r^2_{ur}-r^2_{r})/q}{(1-r^2_{ur})/(n-k-1)}$$
+
+First we will obtain the restricted model. If we were to reject our H0, then the variables would have no impact on our dependent variable. Therefore, our restricted model has excluded the variables that we are testing for. Our unrestricted is the original model from the previous questions. We can furthermore observe that we have to obtain our r_squared from the restricted model as well as the unrestricted model. The q is the number of variables excluded from the unrestricted model. All have been calculated in the following code.
+
+```{r}
+reg_restricted <- lm(log(salary)~educ+log(salbegin))
+r2_un <- summary(reg)$r.squared
+r2_r <- summary(reg_restricted)$r.squared
+df <- nrow(data1)-4-1
+```
+
+In the following code we are plotting the results into our F-statistic formula and calculating the cirtical value as well as the p-value.
+
+```{r}
+#Here we are obtaining our F-statistic
+f_stat <- ((r2_un - r2_r)/2)/((1 - r2_un)/df)
+f_critical <- qf(0.95, 2, df)
+p_value_f <- 1-pf(f_stat, 2, df)
+f_stat
+f_critical
+p_value_f
+```
+
+Our critical value is 3,01, and our t-statistic of 4,23 is above this value. This means that we reject our H0 at a 5% significance level. This can also be seen looking at our p-value, which is 0,02. This is the probability getting a F-statistic that is more extreme, and therefore the lowest significance level at which we will reject out H0. This means that beta_3 and beta_4 are statistically different from 0. 
+
+We can also test it manually with a function in R:
+
+```{r}
+library(foreign)
+library(car)
+myh0 <- c("male=0", "minority=0")
+linearHypothesis(reg, myh0)
+```
+
+Our resultats are the same for each procedure. 
+
+#7. Estimer modellen vha. FGLS og kommenter på resultaterne
+
+We use the Feasible Generalised Least Squares (FGLS) method, when we are unsure which form the heteroskedasticity has. FGLS is a form of Weighted Least Square (WLS), but in the case with WLS, we now which variables affect the variance of the error term, and therefore we don't know the form. With FGLS we need to model the form of heteroskedasticity. 
+
+The method that you use to obtain the form of heterosekdasticity is the following one:
+
+$$
+Equation\space1\\ : \text{Var}(u \mid \mathbf{x}) = \sigma^2 \exp\left(\delta_0 + \delta_1 x_1 + \delta_2 x_2 + \ldots + \delta_k x_k \right)
+$$
+If we knew, which variables were causing the heteroskedasticity, then we would just simply write the above formula as: 
+
+$$
+\text{Var}(u \mid \mathbf{x}) = \sigma^2 x_1
+$$
+This is an example, where we know that it is x1 that is causing the heteroskedasticity. But do to the fact that we don't know the form, we have to estimate the coefficients from the data. 
+
+First we obtain the squared residuals of our OLS model (which is a proxy of the variance) and then we take the log of the residuals: 
+$$log(\hat{u}^2)$$
+```{r}
+logu_2 <- log(resid(reg)^2) #Obtain residuals from the original regression - We square them - And we log them
+```
+
+Then we run a regression with the following form (which is equation 1 rewritten) to calculate the weights of our OLS model:
+
+$$\log(u^2) = a_0 + \delta_1 x_1 + \delta_2 x_2 + \ldots + \delta_k x_k + e$$
+```{r}
+varreg <- lm(logu_2 ~ educ + log(salbegin) + male + minority) #We run a regression on the log_squared_residuals
+```
+
+Calculating the weights:
+$$\hat{h}_i=\text{exp}(\hat{g}_i)$$
+
+```{r}
+h_hat <- exp(fitted(varreg)) 
+```
+
+And then our FGLS can be calculated using the weights, we just calculated. The FLGS gives a weight to each independent variable, which can be seen in the following code.
+
+```{r}
+fgls <- lm(log(salary)~educ+log(salbegin)+male+minority, weight=1/w)
+screenreg(list(OLS = reg, FGLS = fgls), digits = 4)
+```
+
+In the above table, we above compared the original OLS regression and our FLGS regression. As we can see, there are no difference of significance. The estimates are more or less the same, so as the standard errors and significance of the estimates. This could suggest that the form of heteroskedasticity is not very impactful. 
+
+#8. Har FGLS estimationen taget højde for al heteroskedasticiteten?
+
+In question 7, we modelled the type of heteroskedasticity. We can, however, not be sure that the above weights are specified correctly. Therefore, we also have to obtain the heteroskedasticity-robust errors for our FGLS model. This should account for all the heteroskedasticity. This can either be done with the formula we presented in question 4, or automatically in R. This is done with the following code:
+
+```{r}
+fgls_robust <- coeftest(fgls, vcov = vcovHC(fgls, type = "HC0"))
+screenreg(list(OLS = reg, FGLS = fgls, FGLS_robust = fgls_robust), digits = 4)
+```
+
+In the above table we can included all regressions from the exercise: The original OLS, the FGLS and the FGLS with robust standard errors. It can observed that the results are quite similar for all regressions. 
