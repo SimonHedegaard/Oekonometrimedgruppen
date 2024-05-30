@@ -17,14 +17,7 @@ library(car)
 library(sandwich)
 library(texreg)
 data3 <- read_csv("data3.csv")
-```
-
-
-#1. Estimermodellenvha.OLSogkommenterpåresultaterne.
-
-log(earning)= β0 + β1educ + β2exp + β3male+β4ethblack +β5ethhisp + u (1)
-```{r}
-learnings<-data3$learnings
+logearnings<-data3$learnings
 educ<-data3$educ
 exp<-data3$exp
 male<-data3$male
@@ -33,31 +26,47 @@ ethhisp<-data3$ethhisp
 siblings <- data3$siblings
 meduc <- data3$meduc
 feduc <- data3$feduc
+```
 
-model1<-lm(learnings~educ+exp+male+ethblack+ethhisp)
+
+#1. Estimer modellen vha. OLS og kommenter på resultaterne.
+
+First of all, we are going the estimate the model using a simple OLS regression in R. This is done with the following code:
+log(earning)= β0 + β1educ + β2exp + β3male+β4ethblack +β5ethhisp + u (1)
+```{r}
+model1<-lm(logearnings~educ+exp+male+ethblack+ethhisp)
 summary(model1)
 
 ```
+First, we are going to comment of the estimates: 
+
+We can see that if education increases by one unit, then earnings increases by 12,4%, holding every other parameter fixed. Furthermore, we can see that the estimate is significant down to a 0.1%. significance level. Next, we can see that a 1%. increase in experience leads to a 3,38%. increase in earnings. This estimate is significant down to a 0.1 pct. significance level, as well. We have also included three dummy variables in our regression, male, ethblack and ethhisp. The estimate on male is 0.29, meaning that a male gets 29,3% higher earnings than females (which is the reference group) holding everything else fixed. The estimate on ethblack is -0.196, which means that a minority gets 19,5% lower earnings  than non-blacks (which is the reference group) holding everything else fixed. The estimate on ethhisp is -0.097, which means that a minority gets 9,74% lower earnings  than non-hispanic (which is the reference group) holding everything else fixed. The estimate of male is significant down to a 0,1% significant level. The estimate of ethblack is significant down to a 1% significant level.The estimate of ethhisp is not significant. 
+
+We can observe that all variables have the expected sign on the estimates. Further, the R-squared and adjusted R-squared are both around 35 pct, meaning that the model fits 35% of the data. The R-squared indicates how well the model fits the data, meaning that it is a measure of how good the model is. The adjusted R-squared also takes the number of independent variables into account. The F-statistic in the model is 56 with a p-value of 2.2e-16, meaning that the variables are jointly significant.
+
 
 #2. Hvorfor kunne vi være bekymrede for at uddannelse er endogen?
-- Uddannelse kan mulgivis være korreleret med noget i error term --> Dette kunne f.eks. være "ability" --> Derved bliver bliver uddannelse korreleret med error term, hvilket violates MLR4.
+An explanatory variable can have an endogeneity problem, because it is not correctly exogenously determined. Instead, it is correlated with the error term because a variable is missing from the model, and therefore causing a ommitted variable bias. This means that the missing variable becomes part of the error term, and it causes bias in the variable which have endogeneity problems. 
 
-#3. Er sibling s, meduc og feduc brugbare som instrumenter?
+Education can possibly be correlated with "ability" in the error term, which would violate MLR4. This could be solved by finding a proxy for 'ability', but this is not available in the data set.
+
+#3. Er siblings, meduc og feduc brugbare som instrumenter?
 We set up the conditions regarding IV's. 
-- Cov(z,x) \= 0
-- Cov(z,u) = 0 
-Dette skal så gælde for alle variablene
-We can do the reduced eqation to test if they are good IV's regarding the first assuption above. 
+$$cov(z,u)=0$$
+$$cov(z,x)\neq0$$
+This should account for all IV's
+We can not test the first assumption, but we can make the reduced equation to test if they are good IV's regarding the second assumption above. 
+This is done in the following code where we regress education on all the independent variables including the IV's. Then we test whether the estimates of the three IV's are jointly statistically significant.
 
+$$H_0=\beta_{siblings}=\beta_{meduc}=\beta_{feduc}=0$$
+$$H_1=\beta_{siblings}=\beta_{meduc}=\beta_{feduc}\neq0$$
 ```{r}
 reduced1 <- lm(educ ~ siblings + meduc + feduc + exp + male + ethblack + ethhisp)
 linearHypothesis(reduced1, c("siblings=0", "meduc=0", "feduc=0"))
 ```
-We reject H0, meaning that they are jointly different from zero.
-
-Second assumption: 
-- If our 3 IV's are not correlated with out error term (and thereby ability), then we dont have a problem 
-- If this is true, is hard to say
+We reject H0, meaning that they are jointly different from zero. This means that our IV's are correlated with education meaning that assumption 2 are fulfilled.
+Regarding the second assumption, if our 3 IV's are not correlated with out error term (and thereby ability), then we don't have a problem. Is is however hard to say if this it true or not.
+In this case we assume that siblings,feduc, meduc are uncorrelated with the error term, and thereby ability.
 
 #4. Test om uddannelse er endogen.
 
