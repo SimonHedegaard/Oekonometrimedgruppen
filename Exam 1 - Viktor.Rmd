@@ -77,7 +77,7 @@ And then manually with a jarque bera test:
 jarque.bera.test(reg$residuals)
 ```
 $$H0: u \sim N(0,\sigma^2) $$
-The p-value is below the 5% significance level meaning that we reject H0, and thereby the residuals are not normally distributed. This contradicts the above conclusion with the graphical control of the model. Here the conclusion was that the residuals where normally distributed.
+The p-value is below the 5% significance level meaning that we reject H0, and thereby the residuals are not normally distributed. This contradicts the above conclusion with the graphical control of the model. Here the conclusion was that the residuals where normally distributed. 
 
 
 Next we make a plot to test for MLR5 to test for (homoscedacity).
@@ -96,7 +96,7 @@ This can be concluded using the Cook's distance lines which are not even present
 
 #3. Test for heteroskedasticitet vha. Breusch-Pagan-testet og specialudgaven af White-testet.
 
-If the model exhibits heteroskedasticity, then the variance of the error term is not constant for all independent variables. As mentioned above, this would have some implications for our inference tests. To test for heteroskedasticity we peform the Breusch-Pagan-test and White test manually. The formula that we are going to use is the following: 
+If the model exhibits heteroskedasticity, then the variance of the error term is not constant for all independent variables. As mentioned above, this would have some implications for our inference tests. When heteroskedasticity is present, then the t-test and F-test do not have the t and F distributions, and therefore the obtained t-test and F-test will not be valid. To test for heteroskedasticity we peform the Breusch-Pagan-test and White test manually. The formula that we are going to use is the following: 
 
 $$LM = R^2_{\hat{u}[u]} . n$$
 
@@ -182,32 +182,63 @@ Our p-value is, as in the Breusch-Pagan test, 0.007, which is below a significan
 
 When heteroskedasticity is present in the model, we need to obtain heteroskedasticity-robust standard errors instead of the normal standrd errors for the estimator. This will make the standard erros more valid, and therefore the inference tests will be more valid. Manually, they can be computed by following formula: 
 
+$$
+\text{Var}(\hat{\beta}_j) = \frac{\sum_{i=1}^{n} \hat{r}_{ij}^2 \cdot \hat{u}_i^2}{(\text{SSR}_j)^2}
+$$
 
+We will however, calculate the heteroskedasticity-robust standard errors with a function in R. This has been done in the following code, where we have used the function, coeftest. 
 
 ```{r}
 reg_robust <- coeftest(reg, vcov = vcovHC(reg, type = "HC0"))
 screenreg(list(OLS =reg, OLS_robust_se =reg_robust), digits =4)
 ```
-- Here we can compare our standard errors with our robust standard errors
-- Not so big a differene
-- The results does not change
-- Heterosekdasticity is not very strong in this example
-
+We can in the left colomn observe the estimates with the heteroskedasticity-robust standard errors. From the model, it is clear that there is no big difference in the standard erros from the original model and the new model. The biggest difference in standard errors can be observed with the minority, with a difference of 0,0026. Furthermore, it can be seen that the inference results does not change for any of the variables. All variables are still significant at the same significance levels as the original model. We can therefore conclude, that heterosekdasticity is not very strong in this case.
 
 #5. Test hypotesen H0 : β2 = 1 mod alternativet H1 : β2 ̸= 1.
+
+For this question, we are using the following hypotheses: 
+
+$$H0:β_2 = 1$$
+$$H1:β_2 \neq1$$
+To answer the question, we are going to use the following formula: 
+
+$$
+t = \frac{\hat{\beta}_j - \beta_j}{se(\hat{\beta}_j)}
+$$
+
+We are using the values from the OLS_robust_se, and the results can be seen in the following code: 
+
 ```{r}
-t_stat<-(0.82180-1)/0.0374
+t_stat<-(0.8218-1)/0.0374
 t_stat
-c<-qt(0.05, n-1)
+```
+
+Our t-statistic is -4,76. To calculate the t-statsitic, we have used the robust standard error, which we calculated in question 4. The reasons for this has been explained above. 
+
+```{r}
+c<-qt(0.05/2, n-4-1)
 c
-p_value<- pt(t_stat, n-1)
+p_value<- 2*pt(t_stat, n-4-1)
 p_value
 ```
-- We reject the Null Hypothesis
-- Beta_2 is statistically different from 1
-- We reject at a 5 pct. significance level 
+
+In the above code, we have calculated our critical value and our p-value. Our critical value is -1,96, and our t-statistic is above this value. This means that we reject our H0 at a 5% significance level. This can also be seen looking at our p-value, which is 0,0000025. This is the probability getting a t-statistic that is more extreme, and therefore the lowest significance level at which we will reject out H0. This means that beta_2 is statistically different from 1. 
 
 #6. Test hypotesen H0 : β3 = β4 = 0.
+
+We are testing the following hypotheses: 
+
+$$H0:\beta_3 = \beta_4 = 1$$
+$$H1:\beta_3 = \beta_4 \neq1$$
+
+To to test the joint hypothesis, we have to use a F-test. The first formula below is the generel formula har obtaning the F-statistic. The second one is a simplified version, which is the one that we will use. 
+
+$$
+F = \frac{\left(SSR_r - SSR_{ur}\right)/q}{SSR_{ur}/\left(n - k - 1\right)}
+$$
+$$F=\frac{(r^2_{ur}-r^2_{r})/q}{(1-r^2_{ur})/(n-k-1)}$$
+
+First we will obtain the restricted model. If we were to reject our H0, then the variables would have no impact on our dependent variable. Therefore, our restricted model has excluded the variables that we are testing for. Our unrestricted is the original model from the previous questions. We can furthermore observe that we have to obtain our r_squared from the restricted model as well as the unrestricted model. The q is the number of variables excluded from the unrestricted model. All have been calculated in the following code.
 
 ```{r}
 reg_restricted <- lm(log(salary)~educ+log(salbegin))
@@ -216,15 +247,21 @@ r2_r <- summary(reg_restricted)$r.squared
 df <- nrow(data1)-4-1
 ```
 
+In the following code we are plotting the results into our F-statistic formula and calculating the cirtical value as well as the p-value.
+
 ```{r}
 #Here we are obtaining our F-statistic
 f_stat <- ((r2_un - r2_r)/2)/((1 - r2_un)/df)
 f_critical <- qf(0.95, 2, df)
 p_value_f <- 1-pf(f_stat, 2, df)
+f_stat
+f_critical
+p_value_f
 ```
-- We reject our Null hypothesis 
-- Beta_3 and beta_4 are statistically different from 0
-- We cxan also test it with a function in R:
+
+Our critical value is 3,01, and our t-statistic of 4,23 is above this value. This means that we reject our H0 at a 5% significance level. This can also be seen looking at our p-value, which is 0,02. This is the probability getting a F-statistic that is more extreme, and therefore the lowest significance level at which we will reject out H0. This means that beta_3 and beta_4 are statistically different from 0. 
+
+We can also test it manually with a function in R:
 
 ```{r}
 library(foreign)
@@ -233,19 +270,46 @@ myh0 <- c("male=0", "minority=0")
 linearHypothesis(reg, myh0)
 ```
 
+Our resultats are the same for each procedure. 
+
 #7. Estimer modellen vha. FGLS og kommenter på resultaterne
 
+We use the Feasible Generalised Least Squares (FGLS) method, when we are unsure which form the heteroskedasticity has. FGLS is a form of Weighted Least Square (WLS), but in the case with WLS, we now which variables affect the variance of the error term, and therefore we don't know the form. With FGLS we need to model the form of heteroskedasticity. 
+
+The method that you use to obtain the form of heterosekdasticity is the following one:
+
+$$
+Equation71\\ : \text{Var}(u \mid \mathbf{x}) = \sigma^2 \exp\left(\delta_0 + \delta_1 x_1 + \delta_2 x_2 + \ldots + \delta_k x_k \right)
+$$
+If we knew, which variables were causing the heteroskedasticity, then we would just simply write the above formula as: 
+
+$$
+\text{Var}(u \mid \mathbf{x}) = \sigma^2 x_1
+$$
+This is an example, where we know that it is x1 that is causing the heteroskedasticity. But do to the fact that we don't know the form, we have to estimate the coefficients from the data. 
+
+First we obtain the squared residuals of our OLS model (which is a proxy of the variance) and then we take the log of the residuals: 
+$$log(\hat{u}^2)$$
 ```{r}
 logu_2 <- log(resid(reg)^2) #Obtain residuals from the original regression - We square them - And we log them
 ```
 
+Then we run a regression with the following form (which is ) to calculate the weights of our OLS model:
+
+The above formula can be written as:
+$$\log(u^2) = a_0 + \delta_1 x_1 + \delta_2 x_2 + \ldots + \delta_k x_k + e$$
 ```{r}
 varreg <- lm(logu_2 ~ educ + log(salbegin) + male + minority) #We run a regression on the log_squared_residuals
 ```
 
+Calculating the weights:
+$$\hat{h}_i=\text{exp}(\hat{g}_i)$$
+
 ```{r}
-w <- exp(fitted(varreg)) #Obtaining the weights
+w <- exp(fitted(varreg)) 
 ```
+
+And then our FGLS can be calculated using the weights we just calculated. 
 
 ```{r}
 fgls <- lm(log(salary)~educ+log(salbegin)+male+minority, weight=1/w)
