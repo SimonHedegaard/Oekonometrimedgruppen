@@ -4,6 +4,13 @@ output: html_document
 date: "2024-03-18"
 ---
 
+
+```{r}
+options(scipen = 9)  # A large value to penalize scientific notation
+options(digits = 2)   # Set the number of significant digits to display
+```
+
+
 ```{r}
 data1 <- read.csv("~/Desktop/Økonometri 4. semester/Økonometrimedgruppen/data1.csv")
 View(data1)
@@ -145,6 +152,22 @@ p_val
 We reject our null hypothesis meaning that β2 is not equal to 1, meaning that is statistical β2 ̸=1.
 
 6. TesthypotesenH0 :β3 =β4 =0.
+
+$$
+F = \frac{\left(SSR_r - SSR_{ur}\right)/q}{SSR_{ur}/\left(n - k - 1\right)}
+$$
+
+
+$$
+SSR = \sum_{i=1}^{n} (\hat{u}_i)^2
+$$
+
+
+$$F=\frac{(r^2_{ur}-r^2_{r})/2}{(1-r^2_{ur})/(n-k-1)}$$
+
+
+
+
 ```{r}
 ureg<-reg
 rreg<-lm(log(salary)~educ+log(salbegin))
