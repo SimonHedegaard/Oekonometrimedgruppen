@@ -279,7 +279,7 @@ We use the Feasible Generalised Least Squares (FGLS) method, when we are unsure 
 The method that you use to obtain the form of heterosekdasticity is the following one:
 
 $$
-Equation71\\ : \text{Var}(u \mid \mathbf{x}) = \sigma^2 \exp\left(\delta_0 + \delta_1 x_1 + \delta_2 x_2 + \ldots + \delta_k x_k \right)
+Equation\space1\\ : \text{Var}(u \mid \mathbf{x}) = \sigma^2 \exp\left(\delta_0 + \delta_1 x_1 + \delta_2 x_2 + \ldots + \delta_k x_k \right)
 $$
 If we knew, which variables were causing the heteroskedasticity, then we would just simply write the above formula as: 
 
@@ -294,9 +294,8 @@ $$log(\hat{u}^2)$$
 logu_2 <- log(resid(reg)^2) #Obtain residuals from the original regression - We square them - And we log them
 ```
 
-Then we run a regression with the following form (which is ) to calculate the weights of our OLS model:
+Then we run a regression with the following form (which is equation 1 rewritten) to calculate the weights of our OLS model:
 
-The above formula can be written as:
 $$\log(u^2) = a_0 + \delta_1 x_1 + \delta_2 x_2 + \ldots + \delta_k x_k + e$$
 ```{r}
 varreg <- lm(logu_2 ~ educ + log(salbegin) + male + minority) #We run a regression on the log_squared_residuals
@@ -306,21 +305,25 @@ Calculating the weights:
 $$\hat{h}_i=\text{exp}(\hat{g}_i)$$
 
 ```{r}
-w <- exp(fitted(varreg)) 
+h_hat <- exp(fitted(varreg)) 
 ```
 
-And then our FGLS can be calculated using the weights we just calculated. 
+And then our FGLS can be calculated using the weights, we just calculated. The FLGS gives a weight to each independent variable, which can be seen in the following code.
 
 ```{r}
 fgls <- lm(log(salary)~educ+log(salbegin)+male+minority, weight=1/w)
 screenreg(list(OLS = reg, FGLS = fgls), digits = 4)
 ```
-- No differencs between the estimates, standard errors or significance of the estimates 
+
+In the above table, we above compared the original OLS regression and our FLGS regression. As we can see, there are no difference of significance. The estimates are more or less the same, so as the standard errors and significance of the estimates. This could suggest that the form of heteroskedasticity is not very impactful. 
 
 #8. Har FGLS estimationen taget højde for al heteroskedasticiteten?
+
+In question 7, we modelled the type of heteroskedasticity. We can, however, not be sure that the above weights are specified correctly. Therefore, we also have to obtain the heteroskedasticity-robust errors for our FGLS model. This should account for all the heteroskedasticity. This can either be done with the formula we presented in question 4, or automatically in R. This is done with the following code:
 
 ```{r}
 fgls_robust <- coeftest(fgls, vcov = vcovHC(fgls, type = "HC0"))
 screenreg(list(OLS = reg, FGLS = fgls, FGLS_robust = fgls_robust), digits = 4)
 ```
-- Here we have obtained robust standard errors for the FGLS 
+
+In the above table we can included all regressions from the exercise: The original OLS, the FGLS and the FGLS with robust standard errors. It can observed that the results are quite similar for all regressions. 
