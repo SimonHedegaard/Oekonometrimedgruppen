@@ -226,8 +226,8 @@ In the above code, we have calculated our critical value and our p-value. Our cr
 
 We are testing the following hypotheses: 
 
-$$H0:\beta_3 = \beta_4 = 1$$
-$$H1:\beta_3 = \beta_4 \neq1$$
+$$H0:\beta_3 = \beta_4 = 0$$
+$$H1:\beta_3 = \beta_4 \neq0$$
 
 To to test the joint hypothesis, we have to use a F-test. The first formula below is the generel formula har obtaning the F-statistic. The second one is a simplified version, which is the one that we will use. 
 

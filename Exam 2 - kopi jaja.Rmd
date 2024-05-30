@@ -126,7 +126,10 @@ Evidently, we prefer the model with log(salary) and log(salarybegin)
 To test if model1 or model2 are missspecified we can use the Reset test.
 The reset-test is used to test if you should include a squared or cubed variable in the model, in order to correct for missspecification in the model. 
 We do this by using the following formula:
-$$$$
+$$\text{Equation 1}\\y=\beta_0 + \beta_1x_1+\beta_2x_2+...\beta_kx_k+\delta_1\hat{y}^2+\delta_2\hat{y}^3+v$$
+And then we test the following hypotheses:
+$$H_0=\delta_1=\delta_2=0$$
+$$H_0=\delta_1=\delta_2\neq0$$
 If the deltas are statistically significant, this means that there is non-linearity in the model, and this likely means that you should also include a quadratic or a cubed variable in the model.
 
 To do this we first obtain the fitted values for both models:
@@ -145,6 +148,7 @@ y_hat2_squared <- y_hat2^2
 y_hat2_cubed <- y_hat2^3
 ```
 
+And then we use equation 1 to run the regression for both the models:
 ```{r}
 regreset1 <- lm(salary ~ educ + salbegin + male + minority + y_hat1_squared + y_hat1_cubed)
 ```
@@ -153,32 +157,52 @@ regreset1 <- lm(salary ~ educ + salbegin + male + minority + y_hat1_squared + y_
 regreset2 <- lm(logsalary ~ educ + logsalbegin + male + minority + y_hat2_squared + y_hat2_cubed)
 ```
 
+Then we test our hypotheses given above, by using an F-test. We can simply do this in R by using the following code:
 ```{r}
 waldtest(regreset1, vcov = vcov(regreset1), terms = c("y_hat1_squared", "y_hat1_cubed")) #tester manuelt om de hver især er = 0
 waldtest(regreset2, vcov = vcov(regreset2), terms = c("y_hat2_squared", "y_hat2_cubed"))   #tester manuelt om de hver især er = 0
 ```
+We can observe that we fail to reject our null hypotheses for both models (down to a 5% significance level), meaning that both models are well  specified. This contradics our previous assumption that model1 was missspecified.
 
+We can apply the automatic function in r to do a reset test:
 ```{r}
 library(lmtest)
 resettest(model1)
 resettest(model2)
 ```
+The results of the p-values are the same for both methods..
+
 
 #4. Forklar hvorfor det kunne være relevant at medtage educ2 som forklarende variabel i de to modeller. Estimer de to modeller igen hvor educ2 inkluderes (med tilhørende koefficient β5), kommenter kort på outputtet og udfør RESET-testet igen.
+
+It could be relevant to capture the effect that the sign of estimates changes with different values of the independent variables. In this case it could be that for some levels of education the effect is positive and for some levels of education the effect becomes negative.
+
+We include education squared in both models:
 
 ```{r}
 model1_ny <- lm(salary ~ educ + salbegin + male + minority + I(educ^2))
 model2_ny <- lm(logsalary ~ educ + I(educ^2) + logsalbegin + male + minority + I(educ^2))
-screenreg(list(Model1_ny = model1_ny, Model2_ny = model2_ny), digits = 4)
+screenreg(list(Model1=model1, Model1_ny = model1_ny, Model2=model2, Model2_ny = model2_ny), digits = 4)
 ```
+For model 1:
+Including education as a squared variable does not change the significance of salbegin, male and minority. We can furthermore see that both education and education squared are signigicant, and the sign show that for small levels of education does have a negative effect on salary and for high levels of education the effect becomes positive.
 
+For model 2:
+Including education as a squared variable does not change the significance of salbegin, male and minority. We can furthermore see that both education and education squared are not significant, but the sign of education are similar to model 1. The sign show that for small levels of education does have a negative effect on salary and for high levels of education the effect becomes positive.
+
+Then we make the reset test once again. This time we only do it with the resettest in r.
 ```{r}
 resettest(model1_ny)
 resettest(model2_ny)
 ```
+The p-value becomes larger, meaning that we fail to reject at a higher significance level than before. This could seem that both models have become more well specified.
 
 #5. Test hypotesen H0 : β1 = β5 = 0 i begge modeller (fra spørgsmål 4).
+We are testing the following hypotheses: 
 
+$$H0:\beta_1 = \beta_5 = 0$$
+$$H1:\beta_1 = \beta_5 \neq0$$
+To test the hypotheses we use the following command in R:
 ```{r}
 library(foreign)
 library(car)
@@ -186,8 +210,7 @@ myh0 <- c("educ=0", "I(educ^2)=0")
 linearHypothesis(model1_ny, myh0)
 linearHypothesis(model2_ny, myh0)
 ```
-
-- Educ and Educ^2 are jointly significant in both models!
+Our p-values is 0.00000000018798 and 0.000000012754. This means that we reject our H0 at a 5% significance level. This means that beta_1 and beta_5 are jointly statistically different from 0 in both models, and therefore they should both be included in the models.
 
 #6. Kunne der være problemer med målefejl i de to modeller? I hvilke tilfælde vil det udgøre et problem?
 
@@ -199,7 +222,7 @@ Education
 Salary/Beginsalary
 - Some people may include pensions and employment benefits such as payed lunch, car provided by their company, employment stocks, etc.
 
-But it could also be male and minority
+But it could also be male and minority:
 
 Male
 - If one is in doubt.
@@ -207,12 +230,11 @@ Male
 Minority
 - If one believe that they are not a minority.
 
-
 Problem for the dependent variable:
 - Would be a problem if you have measurement error in the dependent variable, then a bias depends whether the cov(u+e,x) is equal or not equal to 0. If it not equal to 0 there may be a measurement error.
 
 Problem for the independent variable:
-- Depending on whether we assume that one of the independent variables is a proxy which is correlated with the error term 2 thing can happen:
+- Depending on whether we assume that one of the independent variables is a proxy which is correlated with the error term 2 things can happen:
 - If the proxy is not correlated with the measurement error then the estimators will not be biased but the varians of the residuals will be larger.
 - If the proxy is correlated with the the measurement error then the estimators will be biased and we would have classical errors in variables (CEV).
 
