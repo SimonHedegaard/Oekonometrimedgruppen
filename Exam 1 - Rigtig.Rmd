@@ -62,7 +62,7 @@ Next we look at the distribution of the error term. We do this by plotting the s
 ```{r}
 plot(reg, 2)
 ```
-It seems that the residuals fit nicely around the dottet line, which means that they are normally distributed. This indicates that MLR 6 is fullfilled. This conclusion is also crucial for doing hypothesis testing, because the MLR6 normallyty distribtuion has to be true to do this. This means that we can use a t-statistic as well as an F-statistic for drawing inference.
+It seems that the residuals fit nicely around the dottet line, which means that they are normally distributed. This indicates that MLR 6 is fullfilled. This conclusion is also crucial for doing hypothesis testing, because the MLR6 about residuals being normally distributed has to be true to do this. This means that we can use a t-statistic as well as an F-statistic for drawing inference.
 
 
 We can also do this with a histrogram where the results are the same: the residuals seems to be normal distributed, however the histrogram contains some outliers which can infer with the model:
@@ -78,7 +78,7 @@ $$H0: u \sim N(0,\sigma^2) $$
 The p-value is below the 5% significance level meaning that we reject H0, and thereby the residuals are not normally distributed. This contradicts the above conclusion with the graphical control of the model. Here the conclusion was that the residuals where normally distributed. 
 
 
-Next we make a plot to test for MLR5 to test for (homoscedacity).
+Next we make a plot to test for MLR5 to test for (homoskedasticity.).
 ```{r}
 plot(reg, 3)
 ```
