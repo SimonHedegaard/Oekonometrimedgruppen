@@ -123,6 +123,18 @@ Der er dermed ikke stærk hetro.
 
 
 5. Test hypotesen H0 : β2 = 1 mod alternativet H1 : β2 ̸= 1.
+
+
+$$H0:β_2 = 1$$
+$$H1:β_2 \neq1$$
+
+
+$$
+t = \frac{\hat{\beta}_j - \beta_j}{se(\hat{\beta}_j)}
+$$
+
+
+
 ```{r}
 t_stat<-(0.82180-1)/0.0374
 c<-qt(0.05,nrow(data1)-1)
