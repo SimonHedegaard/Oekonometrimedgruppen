@@ -101,6 +101,11 @@ _ Cook's distance lines are not even present, meaning that there are no outliers
 
 #Opgave 3: 
 
+$$y=\beta_0 + \beta_1x_1+\beta_2x_2+...\beta_kx_k+\delta_1\hat{y}^2+\delta_2\hat{y}^3+v$$
+
+$$H_0=\delta_1=\delta_2=0$$
+$$H_0=\delta_1=\delta_2\neq0$$
+
 ```{r}
 y_hat1 <- -6.9323 + 0.9933*educ + 1.6082*salbegin + 1.8309*male - 1.7254*minority
 y_hat2 <- 0.84913 + 0.02358*educ + 0.82073*logsalbegin + 0.04547*male - 0.04186*minority
