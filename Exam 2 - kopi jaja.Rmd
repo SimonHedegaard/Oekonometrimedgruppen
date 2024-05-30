@@ -1,0 +1,252 @@
+---
+title: "Exam 2 - kopi true"
+output: html_document
+date: "2024-05-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Exam 2: 
+
+```{r}
+library(readr)
+data2 <- read_csv("data2.csv")
+salary <- data2$salary
+logsalary <- data2$lsalary
+educ <- data2$educ
+salbegin <- data2$salbegin
+logsalbegin <- data2$lsalbegin
+male <- data2$male
+minority <- data2$minority
+```
+
+#Opgave 1: Estimer de to modeller vha. OLS. Kommenter på outputtet, sammenlign og fortolk resultaterne:
+
+```{r}
+model1 <- lm(salary ~ educ + salbegin + male + minority)
+model2 <- lm(logsalary ~ educ + logsalbegin + male + minority)
+screenreg(list(Model1 = model1, Model2 = model2), digits = 4)
+```
+Model 1:
+First, we are going to comment of the estimates: 
+
+We can see that if education increases by one unit, then salary increases by 903,3 dollars, holding every other parameter fixed. Furthermore, we can see that the estimate is significant down to a 0.1 pct. significance level. 
+
+Next, we can see that an increase in beginning salaly by 1000 daollars leads to an increase in salary by 1608 dollars holding every other parameter fixed. This estimate is significant down to a 0.1 pct. significance level, as well. 
+
+We have also included two dummy variables in our regression, male and minority. The estimate on male is 1.8309 meaning that if you are a male you get 1830.9 dollars higher salary than females (which is the reference group) holding everything else fixed. The variable is significant down to a 5 pct. significance level. 
+
+The estimate on minority is -1.7254, which means that a minority gets 1725.4 dollars lower salary than non-minorities (which is the reference group) holding everything else fixed. The variable is not significant.
+
+We can observe that all variables have the expected sign on the estimates. Further, the R-squared and adjusted R-squared are both around 80 pct, meaning that the model fits 80% of the data. The R-square indicates how well the model fits the data, meaning that it is a meausre of how good the model is. The adjusted R-sqaure also takes the number of independent variables into account. The F-statistic in the model 1 is 435 with a p-value of <2e-16, meaning that the varibles are jointly significant. 
+
+
+Model 2: 
+We can see that if education increases by one unit, then salary increases by 2,36 pct, holding every other parameter fixed. Furthermore, we can see that the estimate is significant down to a 0.1 pct. significance level.
+
+Next, we can see that a 1 pct. increase in beginning salaly leads to a 0,82 pct. increase in salary. This estimate is significant down to a 0.1 pct. significance level, as well. 
+
+The estimate on male is 0.0455, meaning that a male gets 4.55% higher salary than females (which is the reference group) holding everything else fixed. The estimate on minority is -0.0419, which means that a minority gets 4.19% lower salary than non-minorities (which is the reference group) holding everything else fixed. Both of these estiamtes are significant down to a 5 pct. significance level. 
+
+We can observe that all variables have the expected sign on the estimates. Further, the R-squared and adjusted R-squared are both around 80 pct, meaning that the model fits 80% of the data. The R-square indicates how well the model fits the data, meaning that it is a meausre of how good the model is. The adjusted R-sqaure also takes the number of independent variables into account. The F-statistic in the model 2 is 460 with a p-value of <2e-16, meaning that the varibles are jointly significant. 
+
+The biggest difference between the two models is that minority becomes statistically significant in model 2.
+
+#Opgave 2 Udfør grafisk modelkontrol af de to modeller. Hvilken model vil du foretrække?
+To answer the quastion we make 4 different graphic model control, because we find theese the most interesting for doing graphical control of the model:
+We make graphical control of the model to conclude wether the Gauss Markov assumptions are fullfiled.
+
+Firstly we plot the residuals agains the fitted values, to look at if it seems that there is a non-linear relationsship in the model:
+
+```{r}
+plot(model1, which = 1, main = "Salary Model")
+plot(model2, which = 1, main = "Log Salary Model")
+```
+For model 1:
+Since the dots are not equally spread around a horizontal line, this indicates that we perhabs have any non-linear relationship  which we should account for.
+This is a sign of a bad specified model, which means that there may be variables which should be included in a non-linear form.
+
+
+For model 2:
+Since the dots are equally spread around a horizontal line, which indicates that we dont have any non-linear relationship, which we should account. 
+This is a sign of a well specified model, which means that there is no variables which should be included in a non-linear form.
+
+Next we look at the distribution of the error term. We do this by plotting the standard residuals against the theoretical quantiles, and also in a histrogram of residuals. Lastly we test it manually using the jarque bera test:
+```{r}
+plot(model1, which = 2, main = "Salary Model")
+plot(model2, which = 2, main = "Log Salary Model")
+```
+Model 1:
+It seems that the residuals does not fit nicely around the dottet line, which means that they are not normally distributed. This indicates that MLR 6 is violated. This conclusion is also crucial for doing hypothesis testing, because the MLR6 about residuals being normally distributed has to be true to do this. This means that we can not use a t-statistic as well as an F-statistic for drawing inference.
+
+Model 2:
+It seems that the residuals fit nicely around the dottet line, which means that they are normally distributed. This indicates that MLR 6 is fullfilled. This conclusion is also crucial for doing hypothesis testing, because the MLR6 about residuals being normally distributed has to be true to do this. This means that we can use a t-statistic as well as an F-statistic for drawing inference.
+
+We can also do this with a histrogram where the results are the same: the residuals seems to be normal distributed for model 2, and not for model 1. However the histrogram for model 2 contains some outliers which can infer with the model:
+```{r}
+hist(resid(model1))
+hist(resid(model2))
+```
+
+And then manually with a jarque bera test:
+```{r}
+jarque.bera.test(model1$residuals)
+jarque.bera.test(model2$residuals)
+```
+$$H0: u \sim N(0,\sigma^2) $$
+The p-value is below the 5% significance level for both model 1 and 2, meaning that we reject H0, and thereby the residuals are not normally distributed. This contradicts the above conclusion with the graphical control of model 2. Here the conclusion was that the residuals where normally distributed. 
+
+Next we make a plot to test for MLR5 to test for (homoskedasticity.).
+```{r}
+plot(model1, which = 3, main = "Salary Model")
+plot(model2, which = 3, main = "Log Salary Model")
+```
+
+For model 1:
+The standardized residuals are not equally spread around the horizontal line (the predicters), which indicates that the model exhibits heteroskedasticity. They are not randomly spread meaning that the distance between theese and the horizontal line does increase with the fitted values.
+
+For model 2:
+The standardized residuals are equally spread around the horizontal line (the predicters), which indicates that the model exhibits homoskedasticity. They are randomly spread meaning that the distance between theese and the horizontal line does not increase with the fitted values.
+
+
+Lastly we look at if there are relevant outliers in the model which need to be accounted for:
+
+```{r}
+plot(model1, which = 5, main = "Salary Model")
+plot(model2, which = 5, main = "Log Salary Model")
+```
+It seems that there is no outliers which have a major impact on the results for both models. However model 2 seems better because the Cook's distance lines are not pressent in the model 2, which they are in model 1.
+
+Evidently, we prefer the model with log(salary) and log(salarybegin)
+
+#Opgave 3 Undersøg om de to modeller er misspecificerede vha. RESET-testet: 
+
+To test if model1 or model2 are missspecified we can use the Reset test.
+The reset-test is used to test if you should include a squared or cubed variable in the model, in order to correct for missspecification in the model. 
+We do this by using the following formula:
+$$$$
+If the deltas are statistically significant, this means that there is non-linearity in the model, and this likely means that you should also include a quadratic or a cubed variable in the model.
+
+To do this we first obtain the fitted values for both models:
+
+```{r}
+y_hat1 <- -6.9323 + 0.9933*educ + 1.6082*salbegin + 1.8309*male - 1.7254*minority
+y_hat2 <- 0.84913 + 0.02358*educ + 0.82073*logsalbegin + 0.04547*male - 0.04186*minority
+```
+
+Then we take the squared and cubed values of the fitted values:
+
+```{r}
+y_hat1_squared <- y_hat1^2
+y_hat1_cubed <- y_hat1^3
+y_hat2_squared <- y_hat2^2
+y_hat2_cubed <- y_hat2^3
+```
+
+```{r}
+regreset1 <- lm(salary ~ educ + salbegin + male + minority + y_hat1_squared + y_hat1_cubed)
+```
+
+```{r}
+regreset2 <- lm(logsalary ~ educ + logsalbegin + male + minority + y_hat2_squared + y_hat2_cubed)
+```
+
+```{r}
+waldtest(regreset1, vcov = vcov(regreset1), terms = c("y_hat1_squared", "y_hat1_cubed")) #tester manuelt om de hver især er = 0
+waldtest(regreset2, vcov = vcov(regreset2), terms = c("y_hat2_squared", "y_hat2_cubed"))   #tester manuelt om de hver især er = 0
+```
+
+```{r}
+library(lmtest)
+resettest(model1)
+resettest(model2)
+```
+
+#4. Forklar hvorfor det kunne være relevant at medtage educ2 som forklarende variabel i de to modeller. Estimer de to modeller igen hvor educ2 inkluderes (med tilhørende koefficient β5), kommenter kort på outputtet og udfør RESET-testet igen.
+
+```{r}
+model1_ny <- lm(salary ~ educ + salbegin + male + minority + I(educ^2))
+model2_ny <- lm(logsalary ~ educ + I(educ^2) + logsalbegin + male + minority + I(educ^2))
+screenreg(list(Model1_ny = model1_ny, Model2_ny = model2_ny), digits = 4)
+```
+
+```{r}
+resettest(model1_ny)
+resettest(model2_ny)
+```
+
+#5. Test hypotesen H0 : β1 = β5 = 0 i begge modeller (fra spørgsmål 4).
+
+```{r}
+library(foreign)
+library(car)
+myh0 <- c("educ=0", "I(educ^2)=0")
+linearHypothesis(model1_ny, myh0)
+linearHypothesis(model2_ny, myh0)
+```
+
+- Educ and Educ^2 are jointly significant in both models!
+
+#6. Kunne der være problemer med målefejl i de to modeller? I hvilke tilfælde vil det udgøre et problem?
+
+We think that 2 variables may have measurement error. 
+
+Education
+- Some people may include on the job training, special training, internship and generel training.
+
+Salary/Beginsalary
+- Some people may include pensions and employment benefits such as payed lunch, car provided by their company, employment stocks, etc.
+
+But it could also be male and minority
+
+Male
+- If one is in doubt.
+
+Minority
+- If one believe that they are not a minority.
+
+
+Problem for the dependent variable:
+- Would be a problem if you have measurement error in the dependent variable, then a bias depends whether the cov(u+e,x) is equal or not equal to 0. If it not equal to 0 there may be a measurement error.
+
+Problem for the independent variable:
+- Depending on whether we assume that one of the independent variables is a proxy which is correlated with the error term 2 thing can happen:
+- If the proxy is not correlated with the measurement error then the estimators will not be biased but the varians of the residuals will be larger.
+- If the proxy is correlated with the the measurement error then the estimators will be biased and we would have classical errors in variables (CEV).
+
+#7. Beregn den prædikterede løn,ásalar y, for hver af de to modeller(fra spørgsmål 4) for de 474 observationer. På baggrund af disse, hvilken model vil du så foretrække?
+
+```{r}
+library(foreign)
+library(ggplot2) # this is a very useful package for data visualisation in R.
+X <- data.frame(educ=seq(1,25), salbegin=17, minority=1, male=1)
+```
+
+#model 1:
+```{r}
+c_interval <- predict(model1_ny, X, interval = "confidence") # this computes the CI for the model 
+p_interval <- predict(model1_ny, X, interval = "prediction") # this computes the PI for the model
+```
+
+```{r}
+salary_pred= c_interval[,1] # this extracts the predicted values 
+lower_ci = c_interval[,2] #this extracts the lower ci from c_interval 
+upper_ci=c_interval[,3] #this extracts the upper ci from c_interval 
+lower_pi = p_interval[,2] #this extracts the lower pi from c_interval 
+upper_pi=p_interval[,3] #this extracts the upper ci from c_interval
+```
+
+```{r}
+myplot <- ggplot(data = X, aes(x = X[,1])) +
+  geom_line(aes(y = salary_pred, colour = "Predicted")) +
+  geom_line(aes(y = lower_ci, colour = "Confidence interval")) +
+  geom_line(aes(y = upper_ci, colour = "Confidence interval")) +
+  geom_line(aes(y = lower_pi, colour = "Predicted interval")) +
+  geom_line(aes(y = upper_pi, colour = "Predicted interval")) +
+  scale_color_manual(values = c("Predicted" = "red", "Confidence interval" = "blue", "Predicted interval" = "green"),
+                     name = "Lines",  # You can adjust the legend title here
+                     labels = c("Predicted", "Confidence interval", "Predicted interval"))  # You can adjust the legend labels here
+myplot
+```
