@@ -57,6 +57,10 @@ log is nice
 
 #Opgave 3 Undersøgomdetomodellerermisspecificeredevha.RESET-testet: 
 
+$$y=\beta_0 + \beta_1x_1+\beta_2x_2+...\beta_kx_k+\delta_1\hat{y}^2+\delta_2\hat{y}^3+v$$
+
+$$H_0=\delta_1=\delta_2=0$$
+$$H_0=\delta_1=\delta_2\neq0$$
 
 ```{r}
 y_hat1 <- -6.9323 + 0.9933*educ + 1.6082*salbegin + 1.8309*male - 1.7254*minority
