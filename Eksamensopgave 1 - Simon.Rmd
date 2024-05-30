@@ -205,7 +205,7 @@ Hvis man ikke ved hvilke variable som forsager heteroskedasticity kan FGLS anven
 
 First we obtain the squared residuals of our OLS model and then we take the log of the residuals: 
 $$log(u^2)$$
-
+ 
 Then we run a regression with the following form to calculate the weights of our OLS model:
 
 $$
