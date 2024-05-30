@@ -15,6 +15,10 @@ knitr::opts_chunk$set(echo = TRUE)
 library(sandwich)
 library(foreign)
 library(texreg)
+library(car)
+library(lmtest)
+library(zoo)
+library(tseries)
 ```
 
 ```{r}
@@ -65,7 +69,7 @@ It seems that the residuals fit nicely around the dottet line, which means that 
 
 We can also do this with a histrogram where the results are the same: the residuals seems to be normal distributed, however the histrogram contains some outliers which can infer with the model:
 ```{r}
-hist(residuals)
+hist(resid(reg))
 ```
 
 And then manually with a jarque bera test:
@@ -176,7 +180,9 @@ Our p-value is, as in the Breusch-Pagan test, 0.007, which is below a significan
 
 #4. Beregn robuste standardfejl for modellen og sammenlign med resultaterne i spørgsmål 1.
 
-- Vi bruger R til at udregne dem, men vi skal også have formlen med, så dden kan forklares: 
+When heteroskedasticity is present in the model, we need to obtain heteroskedasticity-robust standard errors instead of the normal standrd errors for the estimator. This will make the standard erros more valid, and therefore the inference tests will be more valid. Manually, they can be computed by following formula: 
+
+
 
 ```{r}
 reg_robust <- coeftest(reg, vcov = vcovHC(reg, type = "HC0"))
