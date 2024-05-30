@@ -6,8 +6,8 @@ date: "2024-03-18"
 
 
 ```{r}
-options(scipen = 9)  # A large value to penalize scientific notation
-options(digits = 2)   # Set the number of significant digits to display
+options(scipen = 999)  # A large value to penalize scientific notation
+options(digits = 5)   # Set the number of significant digits to display
 ```
 
 
