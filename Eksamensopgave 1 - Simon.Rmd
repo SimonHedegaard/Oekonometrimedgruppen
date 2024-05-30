@@ -97,7 +97,7 @@ white_test<-lm(r2~y_hat+y_hat_sq)
 summary(white_test)
 ```
 Again we reject H0 meaning that the model contains hetroskedaticity
-
+a
 
 4. Beregn robuste standardfejl for modellen og sammenlign med resultaterne i spørgsmål 1.
 
