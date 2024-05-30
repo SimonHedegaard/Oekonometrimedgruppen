@@ -202,6 +202,23 @@ Results are the same.
 7. Estimer modellen vha. FGLS og kommenter på resultaterne.
 
 Hvis man ikke ved hvilke variable som forsager heteroskedasticity kan FGLS anvendes
+
+First we obtain the squared residuals of our OLS model and then we take the log of the residuals: 
+$$log(u^2)$$
+
+Then we run a regression with the following form to calculate the weights of our OLS model:
+
+$$
+\text{Var}(u \mid \mathbf{x}) = \sigma^2 \exp\left(\delta_0 + \delta_1 x_1 + \delta_2 x_2 + \ldots + \delta_k x_k \right)
+$$
+
+
+Which can be written as:
+$$\log(u^2) = a_0 + \delta_1 x_1 + \delta_2 x_2 + \ldots + \delta_k x_k + e$$
+Calculating the weights:
+$$\hat{h}_i=\text{exp}(\hat{g}_i)$$
+And then our FGLS can be calculating by using the weights in calculatting:
+
 ```{r}
 logu2<-log(resid(reg)^2)
 varreg<-lm(logu2~educ+log(salbegin)+male+minority)
