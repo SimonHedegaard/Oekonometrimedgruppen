@@ -11,6 +11,15 @@ library(car)
 library(sandwich)
 library(texreg)
 data4 <- read_csv("data4.csv")
+participation <- data4$participation
+income <- data4$income
+age <- data4$age
+agesq <- data4$agesq
+educ <- data4$educ
+youngkids <- data4$youngkids
+oldkids <- data4$oldkids
+foreign <- data4$foreign
+n <- nrow(data4)
 ```
 
 
@@ -18,66 +27,114 @@ data4 <- read_csv("data4.csv")
 
 #1. Opstil en lineær regressionsmodel for participation hvor du bruger de beskrevne forklarende variable.
 
-$$participation=income+age+agesq+educ+youngkids+oldkids+foreign+u$$
-```{r}
-participation<-data4$participation
-income<-data4$income
-age<-data4$age
-agesq<-data4$agesq
-educ<-data4$educ
-youngkids<-data4$youngkids
-oldkids<-data4$oldkids
-foreign<-data4$foreign
-```
-
+$$participation = \beta_0 + \beta_1*income + \beta_2*age + \beta_3*agesq + \beta_4*educ + \beta_5*youngkids + \beta_6*oldkids + \beta_7*foreign$$
 
 #1. a: Estimer modelle nvha.OLS og kommenter på resultaterne.
+
+First, we are going to estimate the model, using a OLS regression. This is done with the following code: 
 ```{r}
 OLS<-lm(participation~income+age+agesq+educ+youngkids+oldkids+foreign)
 summary(OLS)
 ```
+From the above regression we notice the following: An increase in income by 1000 CHF decreasses the probabillity of being in the labour force by 0.0035, holding everything else fixed. The estimate is significant down to a 0.1% significance level. An increase in age by 1 year (at low levels) increases the probabillity of being in the labour force increases by 0.0634, holding everything else fixed. The estimate is significant down to a 0.1% significance level. If age squared (meaning higher levels of age) increases by 1 year, decreasses the probability of being in the labour force by almost 0, holding everything else fixed. The estimate is significant down to a 0.1% significance level. 1 more year of education increases the probability of being in the labour force by 0.0067725, holding everything else fixed. The estimate is not significant. Having 1 more kid which is below the age of 7 decreases the probability of being in the labour force by 0.239, holding everything else fixed. The estimate is significant down to a 0.1% significance level. Having 1 more kid which is above the age of 7 decreases the probability of being in the labour force by 0.0475, holding everything else fixed. The estimate is significant down to a 1% significance level. Being a foreigner increases the probability of being in the labour force by 0.257, holding everything else fixed. The estimate is significant down to a 0.1% significance level
+
+The R-squared and adjusted R-squared are both around 19 pct, meaning that the model fits 19% of the data. The R-squared indicates how well the model fits the data, meaning that it is a measure of how good the model is. The adjusted R-squared also takes the number of independent variables into account. The F-statistic in the model is 28.98 with a p-value of 2.2e-16, meaning that the variables are jointly significant.
 
 
-#1. b: Test om den partielle effekt af uddannelse er forskellig fra nul.
+##(b) Test om den partielle effekt af uddannelse er forskellig fra nul.
+
+To test whether the partial effect of education is different from zero, we will test the following hypotheses with the following formula: 
+
+$$H0:β_4 = 0$$
+$$H1:β_4 \neq0$$
+ 
+$$
+t = \frac{\hat{\beta}_j - \beta_j}{se(\hat{\beta}_j)}
+$$
+This is done in the following code, where we also have calculated the critical value and the p-value: 
 ```{r}
-df<-OLS$df.residual #n-k-1
-t_stat<-(0.0067725-0)/0.0059615
-c<-qt(1-0.05,df)
-p_val<-2*(1-pt(t_stat,df))
-p_val
+df <- summary(OLS)$df[2]
+t_stat<-0.0067725/0.0059615
+t_stat
+c<-qt(1-0.05, n-1)
+c
+p_value <- 2*pt(-abs(t_stat), df)
+p_value
 ```
 
+We can see that out t-statistic is below our critical value, meaning that we fail to reject our H0 at a 5% significance level. This can also be seen at our p-value, which is 0,26, meaning what we wouldn't even reject our H0 at a 25% significance level. This means that education is not statistically different from 0. 
 
+##(c) Test om den partielle effekt af alder er forskellig fra nul.
 
-#1. c: Test om den partielle effekt af alder er forskellig fra nul.
+For this, we assume that we have to test the jointly significance of both age and age_squared. 
+
+We are testing the following hypotheses: 
+
+$$H0:\beta_2 = \beta_3 = 0$$
+$$H1:\beta_2 = \beta_3 \neq0$$
+
+To to test the joint hypothesis, we have to use a F-test. The first formula below is the generel formula har obtaning the F-statistic. The second one is a simplified version, which is the one that we will use. 
+
+$$
+F = \frac{\left(SSR_r - SSR_{ur}\right)/q}{SSR_{ur}/\left(n - k - 1\right)}
+$$
+$$F=\frac{(r^2_{ur}-r^2_{r})/q}{(1-r^2_{ur})/(n-k-1)}$$
+
+First we will obtain the restricted model. If we were to reject our H0, then the variables would have no impact on our dependent variable. Therefore, our restricted model has excluded the variables that we are testing for. Our unrestricted is the original model from question a. We can furthermore observe that we have to obtain our r_squared from the restricted model as well as the unrestricted model. The q is the number of variables excluded from the unrestricted model. All have been calculated in the following code.
+
 ```{r}
-df<-OLS$df.residual #n-k-1
-t_stat<-(0.0633852-0)/0.0128603
-c<-qt(0.05,df)
-p_val<-2*(1-pt(t_stat,df))
-p_val
+ols_restricted <- lm(participation ~ income + educ + youngkids + oldkids + foreign)
+r2_un <- summary(OLS)$r.squared
+r2_r <- summary(ols_restricted)$r.squared
+df <- nrow(data4)-7-1
 ```
 
+In the following code we are plotting the results into our F-statistic formula and calculating the cirtical value as well as the p-value.
+
+```{r}
+f_stat <- ((r2_un - r2_r)/2)/((1 - r2_un)/df)
+f_critical <- qf(0.95, 2, df)
+p_value_f <- 1-pf(f_stat, 2, df)
+f_stat
+f_critical
+p_value_f
+```
+
+Our critical value is 3, and our t-statistic of 31,87 is above this value. This means that we reject our H0 at a 5% significance level. This can also be seen looking at our p-value, which is a very small number. This is the probability getting a F-statistic that is more extreme, and therefore the lowest significance level at which we will reject out H0. This means that beta_2 and beta_3 are statistically different from 0. 
 
 
 #2 Opstil både en logit- og en probit-model for participation hvor du bruger de beskrevne forklarende variable.
 
+The LPM shows the linear proportional probabilities which means that it does not account for the relavtive changes in the variables. This is a problem because then it does not take account for that the probability always lies within 0 and 1. Meaning that too large changes in the explanatory variables can give unrealistic results.
+
+In order to fix theese unrealistic results we add a G restraint, with two different types of regression models used for predicting binary outcomes. They can either be a logit model or a probit model.
+These models follow a S-curve, where the LPM model follow a linear curve. For very low and very high levels of the explanatory variables the change in probability is low given a change in the explanatory variables.
+
+We do this by the build in function in R:
 ```{r}
-# Fitting the logistic regression model
-logit <- glm(participation ~ income + age + agesq + educ + youngkids + oldkids + foreign, family = binomial(link = "logit"))
-
-# Fitting the probit regression model
-probit <- glm(participation ~ income + age + agesq + educ + youngkids + oldkids + foreign, family = binomial(link = "probit"))
-
-# Loading the texreg package
 library(texreg)
 
-# Displaying the results
+logit <- glm(participation ~ income + age + agesq + educ + youngkids + oldkids + foreign, family = binomial(link = "logit"))
+
+probit <- glm(participation ~ income + age + agesq + educ + youngkids + oldkids + foreign, family = binomial(link = "probit"))
+
 screenreg(list(Logit = logit, Probit = probit), digits = 4)
 
 ```
+From the above we can see the following. If the variable affects the probability with positive or negative effect. If the variables are statistically significant. However we cannot directly interpret the results from this.
 
 #b. Test om den partielle effekt af uddannelse er forskellig fra nul.
+For this question, we are using the following hypotheses: 
+
+$$H0:β_4 = 0$$
+$$H1:β_4 \neq0$$
+To answer the question, we are going to use the following formula: 
+
+$$
+t = \frac{\hat{\beta}_j - \beta_j}{se(\hat{\beta}_j)}
+$$
+We are using the values from both the logit and probit model, and the results can be seen in the following code:
+
 ```{r}
 ##logit:
 df<-logit$df.residual #n-k-1
@@ -95,56 +152,90 @@ p_val
 
 
 ```
+And thereby we fail to reject our null hypothesis meaning that education is not statisticaly significant in both the logit and probit model.
 
 #c. Test om den partielle effekt af alder er forskellig fra nul vha. et likelihood ratio-test (alder er både almindelig og squared)
 
+The likelihood ratio-test is similiar to the F-test, due to the fact that it approximately follows a chi square distribution. In this case we test if age and squared age are jointly different from zero. Thus we can make the following hypotheses:
+$$H0:\beta_2 = \beta_3 = 0$$
+$$H1:\beta_2 = \beta_3 \neq0$$
+
 #probit
 ```{r}
-## Pseudo R^2
+# We first calulate the Pseudo R^2
 probitR <- glm(participation ~ income + educ + youngkids + oldkids + foreign, family = binomial(link = "probit"), data = data4)
-lr <- 2 * (logLik(probit) - logLik(probitR)) #hvad der svarer til en F værdi
+#Then we calculate the likely hood ratio value which is approximately the same as the F-statistic
+lr <- 2 * (logLik(probit) - logLik(probitR))
 lr # The df are not true - these are really 2
+#next we use our lr to calculate the p-value:
 pval <- pchisq(lr, df = 2, lower.tail = F)
 pval
 ```
-
+We get a p-value of 1.960861e-14 from our LR test for the probit model meaning that we reject the hypothesis, which means that age and agesquared is jointly statiscally diffrent from zero.
 
 #logit
 ```{r}
-## Pseudo R^2
+#We first calulate the Pseudo R^2
 logitR <- glm(participation ~ income + educ + youngkids + oldkids + foreign, family = binomial(link = "logit"), data = data4)
+#Then we calculate the likely hood ratio value which is approximately the same as the F-statistic
 lr <- 2 * (logLik(logit) - logLik(logitR)) #hvad der svarer til en F værdi
 lr # The df are not true - these are really 2
+#next we use our lr to calculate the p-value:
 pval <- pchisq(lr, df = 2, lower.tail = F)
 pval
 ```
+OWe get a p-value of 2.455753e-14 from our LR test for the probit model meaning that we reject the hypothesis, which means that age and agesquared is jointly statiscally diffrent from zero.
 
 
-#3. Vi vil gerne sammenligne den partielle effekt af income på tværs af mod- ellerne. Beregn average partial effect (APE) og kommenter på resultaterne.
+#3. Vi vil gerne sammenligne den partielle effekt af income på tværs af modellerne. Beregn average partial effect (APE) og kommenter på resultaterne.
+
+In question 2 we concluded that we couldn't interpret the results that the logit and probit model provided. The problem with the interpretation of the logit and probit models is that the partial effect of the different variables depend not only on the betas relating to a particular variable. It also depends on whether the variable is continuous or discrete and on all the other independent variables. You are not only looking at one effect in isolation, but an overall effect. LPM only looks at the isolated effect of the independent variable, whereas this also takes into account the remaining equation. 
+
+Since the interpretation depends on the entire equation, then we need to make an assumption on, which values the other parameters should take. In this case, we use the Average Partial Effect, meaning that it takes the partial effect for all observations and then takes the average of those effects. Furthermore, the variable income is continuous in this case. To get the partial affects using APE, we use the following codes in R. We are doing it for the probit and logit model. 
+
 ```{r}
 library(mfx)
 ## Average Partial Effect - logit
 ape_logit <- logitmfx(logit, data = data4, atmean = F)
 ## Average Partial Effect - probit
-ape_probit <- probitmfx(probit, data = data4, atmean = F) 
-screenreg(list(Logit_APE = ape_logit, Probit_APE = ape_probit, OLS = OLS), digits = 4)
+ape_probit <- probitmfx(probit, data = data4, atmean = F)
 ```
 
-#4 Vi vil gerne sammenligne den partielle effekt af foreign på tværs af modellerne. Beregn APE og kommenter på resultaterne.
+Now we are able to interpret the results from the logit and probit model. Next, we will compare the results from the logit and probit model with the original OLS regression. 
 ```{r}
-cdata <- cbind(1, as.matrix(data4[, c("income", "age", "agesq", "educ", "youngkids", "oldkids", "foreign")]))
+screenreg(list(OLS = OLS, Logit_APE = ape_logit, Probit_APE = ape_probit), digits = 4)
+```
+
+From the comparision we can see that the estimate on income does not differ much across the models. The estiamte from the OLS model was -0.0035 and the estimate from the Logit and Probit model was -0.0046. The estimates are significant in all models. It seems that income has a higher affect on the participation rate when using the probit and logit models. 
+
+#4. Vi vil gerne sammenligne den partielle effekt af foreign på tværs af modellerne. Beregn APE og kommenter på resultaterne.
+
+The procedure in this question is similar to the above. We need to convert the variable foreign, so we can interpret the results. In generel, we could use the results from the above model, where we used APE. However, when R calculates the partial effets using APE, it assumes that we are dealing with continous varialbes only. Foreign are, however, a binary variable, and there it is a discrete varible. Therefore, we can not directly use the ressults from above, but we have to use the following formula: 
+
+$$$$
+
+This says that, we first treat the variable as 1 and then as 0. Then, we are going to subtract the two, and we can wee the effect, when the binary variable changes from 0 til 1. 
+
+```{r}
+cdata <- cbind(1, as.matrix(data4[, c("income", "age", "agesq", "educ",
+"youngkids", "oldkids", "foreign")]))
 cdata1 <- cdata
 cdata1[, 8] <- 1
 cdata2 <- cdata
 cdata2[, 8] <- 0
 pcoef <- probit$coefficients
 mean(pnorm(cdata1 %*% pcoef) - pnorm(cdata2 %*% pcoef))
-
 ```
+
+This means that being a foreign increases the probability of being in the labor force with 0,249. This result is rather similar to the results from the original OLS regression, where the esimtate where  0.2572. Furthermore, the results is similar to the ones we got with the probit and logit models in the above question using APE. 
 
 #5. Hvorfor er APE at foretrække frem for partial effect at the average(PEA)?
 
+
 #6. Sammenlign modellernes evne til at prædiktere ved at beregne percent correctly predicted for hver model.
+
+In order to calulate the goodness of the fit of the model we can use the percently correctly predicted. This method gives indicates how well the model fits the data. To do so we use the following command in R:
+We caluculate both the PCP for the OLS, Logit and Porbit model to compare how well the models fits the data.
 ```{r}
 ## Percently Correctly Predicted
 y <- data4["participation"]
@@ -153,8 +244,8 @@ logitpred <- 100 * mean((logit$fitted > 0.5) == y)
 probitpred <- 100 * mean((probit$fitted > 0.5) == y) 
 print(c(OLSpred, logitpred, probitpred))
 ```
-
-
+The OLS predicts 67.43% of the data correctly. The Logit predicts 68.12% of the data correctly. The probit predicts 68.12% of the data correctly.
+So to sum up there is no big difference in terms of how well the three models fit the data, however both the logit and probit model seems to be a better model.
 
 
 
