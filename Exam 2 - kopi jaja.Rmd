@@ -128,8 +128,8 @@ The reset-test is used to test if you should include a squared or cubed variable
 We do this by using the following formula:
 $$\text{Equation 1}\\y=\beta_0 + \beta_1x_1+\beta_2x_2+...\beta_kx_k+\delta_1\hat{y}^2+\delta_2\hat{y}^3+v$$
 And then we test the following hypotheses:
-$$H_0=\delta_1=\delta_2=0$$
-$$H_0=\delta_1=\delta_2\neq0$$
+$$H_0:\delta_1=\delta_2=0$$
+$$H_0:\delta_1=\delta_2\neq0$$
 If the deltas are statistically significant, this means that there is non-linearity in the model, and this likely means that you should also include a quadratic or a cubed variable in the model.
 
 To do this we first obtain the fitted values for both models:

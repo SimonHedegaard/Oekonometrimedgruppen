@@ -58,8 +58,8 @@ This should account for all IV's
 We can not test the first assumption, but we can make the reduced equation to test if they are good IV's regarding the second assumption above. 
 This is done in the following code where we regress education on all the independent variables including the IV's. Then we test whether the estimates of the three IV's are jointly statistically significant.
 
-$$H_0=\beta_{siblings}=\beta_{meduc}=\beta_{feduc}=0$$
-$$H_1=\beta_{siblings}=\beta_{meduc}=\beta_{feduc}\neq0$$
+$$H_0:\beta_{siblings}=\beta_{meduc}=\beta_{feduc}=0$$
+$$H_1:\beta_{siblings}=\beta_{meduc}=\beta_{feduc}\neq0$$
 ```{r}
 reduced1 <- lm(educ ~ siblings + meduc + feduc + exp + male + ethblack + ethhisp)
 linearHypothesis(reduced1, c("siblings=0", "meduc=0", "feduc=0"))
@@ -70,80 +70,97 @@ In this case we assume that siblings,feduc, meduc are uncorrelated with the erro
 
 #4. Test om uddannelse er endogen.
 
+We need to test if our education is uncorrelated with our error term. Otherwise we would not need to worry about endogeneity problems. First we test if the error term from the reduced form equation is uncorrelated with the error term form the original regression.
 We first take the estimated residuals from the reduced form equation: 
 ```{r}
 v_hat <- resid(reduced1)
 ```
 
-We then include the residuals in the original model: 
+We then include the residuals from above in the original model, and then we are testing for significance of the error term. The hypotheses are as follows. 
+$$H_0:\beta_{\hat{v}}=0$$
+$$H_1:\beta_{\hat{v}}\neq0$$
 ```{r}
-test_for_endogenitet<-lm(learnings~educ+exp+male+ethblack+ethhisp+v_hat)
+test_for_endogenitet<-lm(logearnings~educ+exp+male+ethblack+ethhisp+v_hat)
 summary(test_for_endogenitet)
 ```
-- If we take a 10% signifikans level, then we fail to reject the null hypothesis, and we should not suspect a endogeniety problem
-- But due to the fact, that the p-value is close to the threshold, then it is possible that it is just some poor IV's that we have chosen 
-- Fx. if we remove siblings as an IV, then we would reject the null at a 10% signifikance level!
+If we take a 10% significance level, then we fail to reject the null hypothesis, and we should not suspect a endogeniety problem. But due to the fact, that the p-value is close to the threshold, then it is possible that it is just some poor IV's that we have chosen. It is possible that if we remove some of the IV's, then we would reject the null at a 10% significance level.
 
 #5. Estimer modellen vha. 2SLS hvor du gør brug af de tre beskrevne instrumenter. Sammenlign med resultaterne i spørgsmål 1.
-
+Do to the fact that we have more IV's than we have endogeniety problems, then we should use a 2SLS to run the regression. First of all we are going to regress education on all the independent variables including the IV's. 
+This is the reduced form equation which we have already calculated in question 3. The reason you control for all the independent variables in the reduced form equation is to make sure, we dont get another bias in the estimate in the next step. We have already calculated step 1 in the 2SLS, where we test if the IV's are statistically significant in regard to education.
+```{r}
+reduced1 <- lm(educ ~ siblings + meduc + feduc + exp + male + ethblack + ethhisp)
+```
+Now we use the fitted values of the reduced form equation, as an IV variable instead of education.
 ```{r}
 educ_fitted <- fitted(reduced1)
-twoSLS <- lm(learnings~educ_fitted+exp+male+ethblack+ethhisp)
+twoSLS <- lm(logearnings~educ_fitted+exp+male+ethblack+ethhisp)
 summary(twoSLS)
 ```
+We now compared out OLS model with our 2SLS model, in order to see if they differ significantly
 ```{r}
 screenreg(list(OLS = model1, Two_SLS = twoSLS),digits = 4)
 ```
+We can see there is a downward bias on education in the regular OLS equation. The estimate of the OLS equation has gone from 0.1242 to 0.1530 in the 2SLS. The estimates in still significant down to a 0,1% significant level. Ethblack is no longer significant. If we assume that the OLS and 2SLS estimates on equation are statistically different, then education must be endogenous.
 
+We can also do the 2SLS with a code in R.
 ```{r}
-twoslsautomatisk <- ivreg(learnings ~ educ + exp + male + ethblack + ethhisp | siblings + meduc + feduc + exp + male + ethblack + ethhisp) 
+twoslsautomatisk <- ivreg(logearnings ~ educ + exp + male + ethblack + ethhisp | siblings + meduc + feduc + exp + male + ethblack + ethhisp) 
 summary(twoslsautomatisk)
 ```
+We can see the estimates is the same as the manual procedure.
 
-```{r}
-screenreg(list(OLS = model1, Two_SLS = twoslsautomatisk),digits = 4)
-```
 
 #6. Udfør overidentifikationstestet. Hvad konkluderer du?
+
+If we choose more IV's than we need, then we need to perform a overidentification test. In general we want to test whether the IV estimates is different from the same parameter(education).
 
 First step: First we obtain the residuals from our 2SLS regression:
 ```{r}
 twoslsautomatisk_res <- resid(twoslsautomatisk)
 ```
 
-Second step: 
+Second step: We then regress the above residuals on all exogenous variables. Next we obtain the R.squared from the model.
 ```{r}
 res_aux <- lm(twoslsautomatisk_res ~ exp + male + ethblack + ethhisp + feduc + meduc + siblings)
 r_squared <- summary(res_aux)$r.squared
 n <- nobs(res_aux)
 ```
 
-We then calculate our test statistic and p-value: 
+Then we test the following Hypotheses.
+$$H_0:cov(z_i,u)=0$$
+$$H_1:cov(z_i,u)\neq0$$
+
+We then calculate our test statistic and p-value. We use the following formula to calculate our test stastistic
+$$
+n*R_1^2 
+$$
 ```{r}
 test_stat <- n*r_squared
 pval <- 1-pchisq(test_stat, 2)
 test_stat
 pval
 ```
-
-Our null hypothesis is rejected, which means that either 1, 2 or all IV's are endogenous 
+Our null hypothesis is rejected, which means that either 1, 2 or all IV's are endogenous. 
 
 #7. Udfør hele analysen igen hvor du kun bruger meduc og feduc som instrumenter. Ændrer det på dine konklusioner?
 
+
+
+#7.3: Er siblings,meduc og feduc brugbare som instrument variable?
 We first test, if you can use these two instruments. 
 
 We set up the conditions regarding IV's. 
-- Cov(z,x) \= 0
-- Cov(z,u) = 0 
-Dette skal så gælde for alle variablene
-We can do the reduced eqation to test if they are good IV's regarding the first assuption above. 
-
+$$cov(z,u)=0$$
+$$cov(z,x)\neq0$$
 ```{r}
 reduced2 <- lm(educ ~ meduc + feduc + exp + male + ethblack + ethhisp)
 linearHypothesis(reduced2, c("meduc=0", "feduc=0"))
 ```
-We reject H0, meaning that they are jointly different from zero.
+We reject H0, meaning that they are jointly different from zero, meaning that we can use the IV's.
 
+
+#7.4 test if education is endogneous for the new model:
 We now test if we really have an endogenity problem:
 
 We first take the estimated residuals from the reduced form equation: 
@@ -153,14 +170,17 @@ v_hat2 <- resid(reduced2)
 
 We then include the residuals in the original model: 
 ```{r}
-test_for_endogenitet2<-lm(learnings~educ+exp+male+ethblack+ethhisp+v_hat2)
+test_for_endogenitet2<-lm(logearnings~educ+exp+male+ethblack+ethhisp+v_hat2)
 summary(test_for_endogenitet2)
 ```
-- If we take a 10% signifikans level, then we reject the null hypothesis, and we should suspect an endogeniety problem
+If we take a 10% significance level, then we reject the null hypothesis, and we should suspect an endogeniety problem. It could seem that siblings was a poor IV, meaning that it was correlated with the error term.
 
-We now use the 2SLS, when we only include the two instruments
+
+#7.5 Estimer modellen vha. 2SLS hvor du gør brug af de to beskrevne instrumenter. Sammenlign med resultaterne i spørgsmål 1.
+
+We now use the 2SLS, where we only include the two instruments. Here we use the build in function in R.
 ```{r}
-twoslsautomatisk2 <- ivreg(learnings ~ educ + exp + male + ethblack + ethhisp | meduc + feduc + exp + male + ethblack + ethhisp)
+twoslsautomatisk2 <- ivreg(logearnings ~ educ + exp + male + ethblack + ethhisp | meduc + feduc + exp + male + ethblack + ethhisp)
 ```
 
 We now compare the two 2SLS, where we have used different instrument variables: 
@@ -168,6 +188,9 @@ We now compare the two 2SLS, where we have used different instrument variables:
 ```{r}
 screenreg(list(Two_SLS_3IV = twoslsautomatisk, Two_SLS_2IV = twoslsautomatisk2),digits = 4)
 ```
+We can see that this did not change the estimate on education.
+
+#7.6 Udfør overidentifikationstestet. Hvad konkluderer du?
 
 We now make an overidentification test to see if we have any problems with the IV's:
 
@@ -176,7 +199,7 @@ First step: First we obtain the residuals from our 2SLS regression:
 twoslsautomatisk_res2 <- resid(twoslsautomatisk2)
 ```
 
-Second step: 
+Second step:  We then regress the above residuals on all exogenous variables. Next we obtain the R.squared from the model.
 ```{r}
 res_aux2 <- lm(twoslsautomatisk_res2 ~ exp + male + ethblack + ethhisp + feduc + meduc)
 r_squared2 <- summary(res_aux2)$r.squared
@@ -190,4 +213,5 @@ pval2 <- 1-pchisq(test_stat2, 1)
 test_stat2
 pval2
 ```
-
+Our null hypothesis is rejected, which means that either meduc,feduc or both are endogenous.
+Thus it would seem that removing siblings as an IV didnt solve our endogeneity problem.
