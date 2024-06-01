@@ -189,9 +189,13 @@ OWe get a p-value of 2.455753e-14 from our LR test for the probit model meaning 
 
 #3. Vi vil gerne sammenligne den partielle effekt af income på tværs af modellerne. Beregn average partial effect (APE) og kommenter på resultaterne.
 
-In question 2 we concluded that we couldn't interpret the results that the logit and probit model provided. The problem with the interpretation of the logit and probit models is that the partial effect of the different variables depend not only on the betas relating to a particular variable. It also depends on whether the variable is continuous or discrete and on all the other independent variables. You are not only looking at one effect in isolation, but an overall effect. LPM only looks at the isolated effect of the independent variable, whereas this also takes into account the remaining equation. 
+In question 2 we concluded that we couldn't interpret the results that the logit and probit model provided. The problem with the interpretation of the logit and probit models is that the partial effect of the different variables depend not only on the betas relating to a particular variable. It also depends on whether the variable is continuous or discrete and on the values of the other independent variables. You are not only looking at one effect in isolation, but an overall effect. LPM only looks at the isolated effect of the independent variable, whereas this also takes into account the effect of the restriction function G (the logistc or the probitc distribution).
 
-Since the interpretation depends on the entire equation, then we need to make an assumption on, which values the other parameters should take. In this case, we use the Average Partial Effect, meaning that it takes the partial effect for all observations and then takes the average of those effects. Furthermore, the variable income is continuous in this case. To get the partial affects using APE, we use the following codes in R. We are doing it for the probit and logit model. 
+$$
+\frac{\partial P(y = 1 \mid \mathbf{x})}{\partial x_j} = g(\beta_0 + \mathbf{x}\beta) \beta_j
+$$
+
+Since the interpretation depends on the entire equation, then we need to make an assumption on, which values the other parameters x should take. In this case, we use the Average Partial Effect, meaning that it takes the partial effect for all observations and then takes the average of those effects. Furthermore, the variable income is continuous in this case. To get the partial affects using APE, we use the following codes in R. We are doing it for the probit and logit model. 
 
 ```{r}
 library(mfx)
@@ -212,7 +216,7 @@ From the comparision we can see that the estimate on income does not differ much
 
 The procedure in this question is similar to the above. We need to convert the variable foreign, so we can interpret the results. In generel, we could use the results from the above model, where we used APE. However, when R calculates the partial effets using APE, it assumes that we are dealing with continous varialbes only. Foreign are, however, a binary variable, and there it is a discrete varible. Therefore, we can not directly use the ressults from above, but we have to use the following formula: 
 
-$$$$
+$$G(\beta_0+\beta_1+\beta_2*x_2+...+\beta_k*x_k)-G(\beta_0+\beta_2*x_2+...+\beta_k*x_k)$$
 
 This says that, we first treat the variable as 1 and then as 0. Then, we are going to subtract the two, and we can wee the effect, when the binary variable changes from 0 til 1. 
 
@@ -230,12 +234,11 @@ mean(pnorm(cdata1 %*% pcoef) - pnorm(cdata2 %*% pcoef))
 This means that being a foreign increases the probability of being in the labor force with 0,249. This result is rather similar to the results from the original OLS regression, where the esimtate where  0.2572. Furthermore, the results is similar to the ones we got with the probit and logit models in the above question using APE. 
 
 #5. Hvorfor er APE at foretrække frem for partial effect at the average(PEA)?
-
+APE is preferable due to the fact that APE accounts for heterogeneity in the data, and thereby it accounts for non-linear relationships and interaction effects between the variables. This can be seen by the fact that APE calculates the individual partial effects across all observations. APE takes the effect when plotting each observation into the function. And then it takes the average off all the effects. On the other hand PEA takes the mean value of all independent variables and then it calculates only calculates 1 effect. It assumes that the mean value is representative of the effect for the entire population, however this is often not the case because the relationship between variables can be non-linear.
 
 #6. Sammenlign modellernes evne til at prædiktere ved at beregne percent correctly predicted for hver model.
-
-In order to calulate the goodness of the fit of the model we can use the percently correctly predicted. This method gives indicates how well the model fits the data. To do so we use the following command in R:
-We caluculate both the PCP for the OLS, Logit and Porbit model to compare how well the models fits the data.
+In order to calulate the goodness of the fit of the model we can use the percently correctly predicted. This method indicates how well the model fits the data. To do so we use the following command in R:
+We caluculate both the PCP for the OLS, Logit and Probit model to compare how well the models fits the data. The rule of thumb is that if the result is below 50%, the model does not fit the data well.
 ```{r}
 ## Percently Correctly Predicted
 y <- data4["participation"]
@@ -245,7 +248,7 @@ probitpred <- 100 * mean((probit$fitted > 0.5) == y)
 print(c(OLSpred, logitpred, probitpred))
 ```
 The OLS predicts 67.43% of the data correctly. The Logit predicts 68.12% of the data correctly. The probit predicts 68.12% of the data correctly.
-So to sum up there is no big difference in terms of how well the three models fit the data, however both the logit and probit model seems to be a better model.
+So to sum up there is no big difference in terms of how well the three models fit the data, however both the logit and probit model seems to be a better model. 
 
 
 
