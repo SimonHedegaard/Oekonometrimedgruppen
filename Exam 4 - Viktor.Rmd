@@ -45,6 +45,15 @@ summary(ols)
 
 ##(b) Test om den partielle effekt af uddannelse er forskellig fra nul.
 
+To test whether the partial effect of education is different from zero, we will test the following hypotheses with the following formula: 
+
+$$H0:β_4 = 0$$
+$$H1:β_4 \neq0$$
+ 
+$$
+t = \frac{\hat{\beta}_j - \beta_j}{se(\hat{\beta}_j)}
+$$
+This is done in the following code, where we also have calculated the critical value and the p-value: 
 ```{r}
 df <- summary(ols)$df[2]
 t_stat<-0.0067725/0.0059615
@@ -55,16 +64,45 @@ p_value <- 2*pt(-abs(t_stat), df)
 p_value
 ```
 
+We can see that out t-statistic is below our critical value, meaning that we fail to reject our H0 at a 5% significance level. This can also be seen at our p-value, which is 0,26, meaning what we wouldn't even reject our H0 at a 25% significance level. This means that education is not statistically different from 0. 
+
 ##(c) Test om den partielle effekt af alder er forskellig fra nul.
 
+For this, we assume that we have to test the jointly significance of both age and age_squared. 
+
+We are testing the following hypotheses: 
+
+$$H0:\beta_2 = \beta_3 = 0$$
+$$H1:\beta_2 = \beta_3 \neq0$$
+
+To to test the joint hypothesis, we have to use a F-test. The first formula below is the generel formula har obtaning the F-statistic. The second one is a simplified version, which is the one that we will use. 
+
+$$
+F = \frac{\left(SSR_r - SSR_{ur}\right)/q}{SSR_{ur}/\left(n - k - 1\right)}
+$$
+$$F=\frac{(r^2_{ur}-r^2_{r})/q}{(1-r^2_{ur})/(n-k-1)}$$
+
+First we will obtain the restricted model. If we were to reject our H0, then the variables would have no impact on our dependent variable. Therefore, our restricted model has excluded the variables that we are testing for. Our unrestricted is the original model from question a. We can furthermore observe that we have to obtain our r_squared from the restricted model as well as the unrestricted model. The q is the number of variables excluded from the unrestricted model. All have been calculated in the following code.
+
 ```{r}
-t_stat2<-0.0633852/0.0128603
-t_stat2
-c<-qt(1-0.05, n-1)
-c
-p_value2 <- 2*pt(-abs(t_stat2), df)
-p_value2
+ols_restricted <- lm(participation ~ income + educ + youngkids + oldkids + foreign)
+r2_un <- summary(ols)$r.squared
+r2_r <- summary(ols_restricted)$r.squared
+df <- nrow(data4)-7-1
 ```
+
+In the following code we are plotting the results into our F-statistic formula and calculating the cirtical value as well as the p-value.
+
+```{r}
+f_stat <- ((r2_un - r2_r)/2)/((1 - r2_un)/df)
+f_critical <- qf(0.95, 2, df)
+p_value_f <- 1-pf(f_stat, 2, df)
+f_stat
+f_critical
+p_value_f
+```
+
+Our critical value is 3, and our t-statistic of 31,87 is above this value. This means that we reject our H0 at a 5% significance level. This can also be seen looking at our p-value, which is a very small number. This is the probability getting a F-statistic that is more extreme, and therefore the lowest significance level at which we will reject out H0. This means that beta_2 and beta_3 are statistically different from 0. 
 
 #2. Opstil både en logit- og en probit-model for participation hvor du bruger de beskrevne forklarende variable.
 
