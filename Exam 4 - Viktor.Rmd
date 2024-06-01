@@ -165,16 +165,32 @@ pval_probit # Suggests surely that we must reject H_0 (as expected)
 
 #3. Vi vil gerne sammenligne den partielle effekt af income på tværs af modellerne. Beregn average partial effect (APE) og kommenter på resultaterne.
 
+In question 2 we concluded that we couldn't interpret the results that the logit and probit model provided. The problem with the interpretation of the logit and probit models is that the partial effect of the different variables depend not only on the betas relating to a particular variable. It also depends on whether the variable is continuous or discrete and on all the other independent variables. You are not only looking at one effect in isolation, but an overall effect. LPM only looks at the isolated effect of the independent variable, whereas this also takes into account the remaining equation. 
+
+Since the interpretation depends on the entire equation, then we need to make an assumption on, which values the other parameters should take. In this case, we use the Average Partial Effect, meaning that it takes the partial effect for all observations and then takes the average of those effects. Furthermore, the variable income is continuous in this case. To get the partial affects using APE, we use the following codes in R. We are doing it for the probit and logit model. 
+
 ```{r}
 library(mfx)
 ## Average Partial Effect - logit
 ape_logit <- logitmfx(logit, data = data4, atmean = F)
 ## Average Partial Effect - probit
 ape_probit <- probitmfx(probit, data = data4, atmean = F)
+```
+
+Now we are able to interpret the results from the logit and probit model. Next, we will compare the results from the logit and probit model with the original OLS regression. 
+```{r}
 screenreg(list(OLS = ols, Logit_APE = ape_logit, Probit_APE = ape_probit), digits = 4)
 ```
 
-#4. Vi vil gerne sammenligne den partielle effekt af f or ei g n på tværs af modellerne. Beregn APE og kommenter på resultaterne.
+From the comparision we can see that the estimate on income does not differ much across the models. The estiamte from the OLS model was -0.0035 and the estimate from the Logit and Probit model was -0.0046. The estimates are significant in all models. It seems that income has a higher affect on the participation rate when using the probit and logit models. 
+
+#4. Vi vil gerne sammenligne den partielle effekt af foreign på tværs af modellerne. Beregn APE og kommenter på resultaterne.
+
+The procedure in this question is similar to the above. We need to convert the variable foreign, so we can interpret the results. In generel, we could use the results from the above model, where we used APE. However, when R calculates the partial effets using APE, it assumes that we are dealing with continous varialbes only. Foreign are, however, a binary variable, and there it is a discrete varible. Therefore, we can not directly use the ressults from above, but we have to use the following formula: 
+
+$$$$
+
+This says that, we first treat the variable as 1 and then as 0. Then, we are going to subtract the two, and we can wee the effect, when the binary variable changes from 0 til 1. 
 
 ```{r}
 cdata <- cbind(1, as.matrix(data4[, c("income", "age", "agesq", "educ",
@@ -186,6 +202,8 @@ cdata2[, 8] <- 0
 pcoef <- probit$coefficients
 mean(pnorm(cdata1 %*% pcoef) - pnorm(cdata2 %*% pcoef))
 ```
+
+This means that being a foreign increases the probability of being in the labor force with 0,249. This result is rather similar to the results from the original OLS regression, where the esimtate where  0.2572. Furthermore, the results is similar to the ones we got with the probit and logit models in the above question using APE. 
 
 #5. Hvorfor er APE at foretrække frem for partial effect at the average (PEA)?
 
