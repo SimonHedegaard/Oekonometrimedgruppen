@@ -1,8 +1,10 @@
 ---
 title: "Exam 1 - Rigtig"
-author: "Viktor Damm"
-date: "2024-05-30"
-output: html_document
+author: "Nicolaj Førby Lassen, Simon Stevn Hedegaard, Viktor Damm"
+date: "2024-06-14"
+output:
+  pdf_document: 
+    latex_engine: xelatex
 ---
 
 ```{r setup, include=FALSE}
@@ -277,7 +279,7 @@ We use the Feasible Generalised Least Squares (FGLS) method, when we are unsure 
 The method that you use to obtain the form of heterosekdasticity is the following one:
 
 $$
-Equation\space1\\ : \text{Var}(u \mid \mathbf{x}) = \sigma^2 \exp\left(\delta_0 + \delta_1 x_1 + \delta_2 x_2 + \ldots + \delta_k x_k \right)
+Equation\space1\\  \text{Var}(u \mid \mathbf{x}) = \sigma^2 \exp\left(\delta_0 + \delta_1 x_1 + \delta_2 x_2 + \ldots + \delta_k x_k \right)
 $$
 If we knew, which variables were causing the heteroskedasticity, then we would just simply write the above formula as: 
 
@@ -289,14 +291,14 @@ This is an example, where we know that it is x1 that is causing the heteroskedas
 First we obtain the squared residuals of our OLS model (which is a proxy of the variance) and then we take the log of the residuals: 
 $$log(\hat{u}^2)$$
 ```{r}
-logu_2 <- log(resid(reg)^2) #Obtain residuals from the original regression - We square them - And we log them
+logu_2 <- log(resid(reg)^2) 
 ```
 
 Then we run a regression with the following form (which is equation 1 rewritten) to calculate the weights of our OLS model:
 
 $$\log(u^2) = a_0 + \delta_1 x_1 + \delta_2 x_2 + \ldots + \delta_k x_k + e$$
 ```{r}
-varreg <- lm(logu_2 ~ educ + log(salbegin) + male + minority) #We run a regression on the log_squared_residuals
+varreg <- lm(logu_2 ~ educ + log(salbegin) + male + minority) 
 ```
 
 Calculating the weights:
@@ -309,7 +311,7 @@ h_hat <- exp(fitted(varreg))
 And then our FGLS can be calculated using the weights, we just calculated. The FLGS gives a weight to each independent variable, which can be seen in the following code.
 
 ```{r}
-fgls <- lm(log(salary)~educ+log(salbegin)+male+minority, weight=1/w)
+fgls <- lm(log(salary)~educ+log(salbegin)+male+minority, weight=1/h_hat)
 screenreg(list(OLS = reg, FGLS = fgls), digits = 4)
 ```
 

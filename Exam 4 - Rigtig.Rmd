@@ -1,7 +1,8 @@
 ---
 title: "Eksamensopgave 4 - Simon"
+author: "Nicolaj Førby Lassen, Simon Stevn Hedegaard, Viktor Damm"
 output: html_document
-date: "2024-05-28"
+date: "2024-06-14"
 ---
 ```{r}
 library(readr)
@@ -21,9 +22,6 @@ oldkids <- data4$oldkids
 foreign <- data4$foreign
 n <- nrow(data4)
 ```
-
-
-
 
 #1. Opstil en lineær regressionsmodel for participation hvor du bruger de beskrevne forklarende variable.
 

@@ -1,7 +1,7 @@
 ---
 title: "Exam 3 - Viktor"
-author: "Viktor Damm"
-date: "2024-05-16"
+author: "Nicolaj Førby Lassen, Simon Stevn Hedegaard, Viktor Damm"
+date: "2024-06-14"
 output: html_document
 ---
 

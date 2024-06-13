@@ -1,7 +1,8 @@
 ---
 title: "Exam 2 - kopi true"
+author: "Nicolaj Førby Lassen, Simon Stevn Hedegaard, Viktor Damm"
 output: html_document
-date: "2024-05-30"
+date: "2024-06-14"
 ---
 
 ```{r setup, include=FALSE}
